@@ -54,8 +54,8 @@
       <div class="field"><label>Club</label><input id="club" /></div>
     </div>
     <div class="field">
-      <label>Shipping / Billing Address</label>
-      <textarea id="address" rows="3" placeholder="Club Name&#10;Attn: Name&#10;Street&#10;City, State ZIP"></textarea>
+      <label>Shipping / Billing Address (one line per line)</label>
+      <textarea id="address" rows="3" placeholder="Club Name&#10;Attn: Name&#10;Street&#10;City, State ZIP&#10;Phone"></textarea>
     </div>
     <div class="row2">
       <div class="field"><label>Ship Date</label><input id="ship_date" placeholder="Friday, May 29, 2026" /></div>
@@ -124,9 +124,10 @@ function addItem() {
     <p class="item-label">Item ${n}</p>
     <div class="field"><label>Product URL</label><input id="url_${n}" placeholder="https://mayorclothing.com/products/..." /></div>
     <div class="field"><label>Description (verbatim)</label><textarea id="desc_${n}" rows="4"></textarea></div>
-    <div class="row4">
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px;">
       <div class="field"><label>Qty</label><input id="qty_${n}" type="number" placeholder="24" oninput="calcItem(${n})" /></div>
-      <div class="field"><label>Price</label><input id="price_${n}" type="number" step="0.01" placeholder="49.00" oninput="calcItem(${n})" /></div>
+      <div class="field"><label>Original Price (struck)</label><input id="orig_price_${n}" type="number" step="0.01" placeholder="optional" /></div>
+      <div class="field"><label>Actual Price</label><input id="price_${n}" type="number" step="0.01" placeholder="49.00" oninput="calcItem(${n})" /></div>
       <div class="field"><label>Amount (auto)</label><input id="amount_${n}" type="number" step="0.01" readonly /></div>
     </div>`;
   document.getElementById('items-container').appendChild(div);
@@ -186,6 +187,7 @@ async function generate() {
       url: val('url_' + i),
       description: desc,
       quantity: qty,
+      orig_price: num('orig_price_' + i) || null,
       price: num('price_' + i),
       amount: num('amount_' + i)
     });
