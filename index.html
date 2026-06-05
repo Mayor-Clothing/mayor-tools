@@ -133,10 +133,12 @@ function parseHubspot() {
   if (!raw.trim()) return;
 
   function getField(letter, hint) {
-    // Matches: "* a. Order Number" (or "a. Order Number" for first field)
-    // then optional blank line, then "* Details", then value on next line
+    // Handles both "* a. Label" and "a. Label" (first field has no *)
+    // Followed by optional blank line, then optional "* ", then "Details", then value
+    const escapedHint = hint.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escapedLetter = letter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const re = new RegExp(
-      '(?:\\*\\s*)?' + letter + '\\.\\s*' + hint + '[^\n]*\n(?:\n)?\\*\\s*Details\\s*\n([^\n]+)',
+      '(?:\\*\\s*)?' + escapedLetter + '\\.\\s*' + escapedHint + '[^\n]*\n\\s*\n?\\s*(?:\\*\\s*)?Details\\s*\n([^\n]+)',
       'i'
     );
     const m = raw.match(re);
@@ -181,7 +183,10 @@ function parseHubspot() {
     if (sv > 0) document.getElementById('shipping').value = sv;
   }
 
-  const numItems = Math.max(1, Math.min(qtys.filter(q => q > 0).length || descs.filter(d => d && d !== '--').length, 5));
+  const numItems = Math.max(1, Math.min(
+    qtys.filter(q => q > 0).length || descs.filter(d => d && d !== '--').length,
+    5
+  ));
 
   document.getElementById('items-container').innerHTML = '';
   itemCount = 0;
