@@ -171,11 +171,13 @@ function parseHubspot() {
   if (club)     document.getElementById('club').value = club;
 
   if (address && address !== '--') {
-    // Only split address on ", Attn:" and phone numbers — keep city/state/zip together
-    const addrFormatted = address
-      .replace(/,\s*(Attn:)/g, '\n$1')
-      .replace(/,\s*(\(\d{3}\))/g, '\n$1')
-      .trim();
+    // Split smashed HubSpot address into lines
+    let addrFormatted = address
+      .replace(/([a-z])([A-Z])/g, '$1\n$2')          // camelCase joins e.g. ShopHawks
+      .replace(/([a-zA-Z])(\d{3,})/g, '$1\n$2')     // letter before street number
+      .replace(/(\d{5})\s*\(/g, '$1\n(')           // zip then phone
+      .replace(/\s+([a-zA-Z0-9._%+\-]+@)/g, '\n$1') // emails
+      .replace(/\n+/g, '\n').trim();
     document.getElementById('address').value = addrFormatted;
   }
 
@@ -207,8 +209,14 @@ function parseHubspot() {
     const n = i + 1;
     if (urls[i]   && urls[i]   !== '--') document.getElementById('url_'   + n).value = urls[i];
     if (descs[i]  && descs[i]  !== '--') document.getElementById('desc_'  + n).value = descs[i].replace(/ \/ /g, '\n');
-    if (qtys[i]   > 0)                   document.getElementById('qty_'   + n).value = qtys[i];
-    if (prices[i] > 0)                   document.getElementById('price_' + n).value = prices[i];
+    if (qtys[i] > 0)   document.getElementById('qty_' + n).value = qtys[i];
+    // If price is $0 but item 1 had a price, treat as comped — set orig_price to item 1 price
+    if (prices[i] === 0 && prices[0] > 0 && qtys[i] > 0) {
+      document.getElementById('orig_price_' + n).value = prices[0];
+      document.getElementById('price_' + n).value = 0;
+    } else if (prices[i] > 0) {
+      document.getElementById('price_' + n).value = prices[i];
+    }
     calcItem(n);
   }
 
