@@ -132,27 +132,28 @@ function parseHubspot() {
   const raw = document.getElementById('hubspot-paste').value;
   if (!raw.trim()) return;
 
-  // Simplest possible approach: split on "Details" and grab the line after each one
-  // Structure is always: Label -> (blank line) -> Details -> Value
   const lines = raw.split('\n').map(l => l.trim());
   const data = {};
 
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].toLowerCase() === 'details' && i + 1 < lines.length) {
-      // Find the label line before this Details line (skip blank lines going backwards)
+    // Match "Details" or "* Details"
+    const stripped = lines[i].replace(/^\*\s*/, '').trim();
+    if (stripped.toLowerCase() === 'details' && i + 1 < lines.length) {
+      // Find label above (skip blank lines)
       let labelIdx = i - 1;
       while (labelIdx >= 0 && lines[labelIdx] === '') labelIdx--;
       if (labelIdx >= 0) {
-        const label = lines[labelIdx].replace(/^\*\s*/, '').trim(); // strip leading "* "
-        const value = lines[i + 1] ? lines[i + 1].trim() : '';
+        const label = lines[labelIdx].replace(/^\*\s*/, '').trim();
+        // Get value — if next line is blank, try the line after
+        let value = lines[i + 1] ? lines[i + 1].trim() : '';
+        if (!value && i + 2 < lines.length) value = lines[i + 2].trim();
         data[label] = value;
       }
     }
   }
 
-  console.log('Parsed data:', JSON.stringify(data, null, 2));
+  console.log('Parsed fields:', data);
 
-  // Helper to find value by matching label prefix
   function get(prefix) {
     for (const key of Object.keys(data)) {
       if (key.toLowerCase().startsWith(prefix.toLowerCase())) return data[key] || '';
@@ -170,11 +171,10 @@ function parseHubspot() {
   if (club)     document.getElementById('club').value = club;
 
   if (address && address !== '--') {
+    // Only split address on ", Attn:" and phone numbers — keep city/state/zip together
     const addrFormatted = address
       .replace(/,\s*(Attn:)/g, '\n$1')
-      .replace(/,\s*(\d)/g, '\n$1')
-      .replace(/,\s*([A-Z][a-z])/g, '\n$1')
-      .replace(/,\s*(\()/g, '\n$1')
+      .replace(/,\s*(\(\d{3}\))/g, '\n$1')
       .trim();
     document.getElementById('address').value = addrFormatted;
   }
@@ -193,10 +193,12 @@ function parseHubspot() {
     if (sv > 0) document.getElementById('shipping').value = sv;
   }
 
-  const numItems = Math.max(1, Math.min(
-    qtys.filter(q => q > 0).length || descs.filter(d => d && d !== '--').length,
-    5
-  ));
+  // Count items: any with qty>0 OR a real description
+  let numItems = 0;
+  for (let i = 0; i < 5; i++) {
+    if (qtys[i] > 0 || (descs[i] && descs[i] !== '--')) numItems = i + 1;
+  }
+  numItems = Math.max(1, numItems);
 
   document.getElementById('items-container').innerHTML = '';
   itemCount = 0;
