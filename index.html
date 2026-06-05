@@ -210,11 +210,19 @@ function parseHubspot() {
     if (urls[i]   && urls[i]   !== '--') document.getElementById('url_'   + n).value = urls[i];
     if (descs[i]  && descs[i]  !== '--') document.getElementById('desc_'  + n).value = descs[i].replace(/ \/ /g, '\n');
     if (qtys[i] > 0)   document.getElementById('qty_' + n).value = qtys[i];
-    // If price is $0 but a previous item had a price, treat as comped
-    const firstPrice = prices.find(p => p > 0) || 0;
-    if (prices[i] === 0 && firstPrice > 0 && qtys[i] > 0) {
-      document.getElementById('orig_price_' + n).value = firstPrice.toFixed(2);
-      document.getElementById('price_' + n).value = '0';
+    // If price is $0 and same URL as a previous item, use that item's price as orig_price
+    if (prices[i] === 0 && qtys[i] > 0) {
+      let matchPrice = 0;
+      for (let j = 0; j < i; j++) {
+        if (urls[j] && urls[i] && urls[j] === urls[i] && urls[j] !== '--' && prices[j] > 0) {
+          matchPrice = prices[j];
+          break;
+        }
+      }
+      if (matchPrice > 0) {
+        document.getElementById('orig_price_' + n).value = matchPrice.toFixed(2);
+        document.getElementById('price_' + n).value = '0';
+      }
     } else if (prices[i] > 0) {
       document.getElementById('price_' + n).value = prices[i];
     }
