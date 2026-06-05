@@ -132,17 +132,17 @@ function parseHubspot() {
   const raw = document.getElementById('hubspot-paste').value;
   if (!raw.trim()) return;
 
-  // Extract value after "* <letter>. <label>" followed by "* Details" then the value on next line
-  function getField(letter, labelHint) {
+  function getField(letter, hint) {
+    // Matches: "* a. Order Number" (or "a. Order Number" for first field)
+    // then optional blank line, then "* Details", then value on next line
     const re = new RegExp(
-      '\\*\\s*' + letter + '\\.\\s*' + labelHint + '[^\n]*\n\\*\\s*Details\s*\n([^\n]+)',
+      '(?:\\*\\s*)?' + letter + '\\.\\s*' + hint + '[^\n]*\n(?:\n)?\\*\\s*Details\\s*\n([^\n]+)',
       'i'
     );
     const m = raw.match(re);
     return m ? m[1].trim() : '';
   }
 
-  // Order info
   const orderNum = getField('a', 'Order Number');
   const club     = getField('b', 'Club');
   const address  = getField('c', 'Shipping');
@@ -152,70 +152,53 @@ function parseHubspot() {
   if (orderNum) document.getElementById('order_number').value = orderNum;
   if (club)     document.getElementById('club').value = club;
 
-  // Address: HubSpot stores as comma-separated, split into lines
   if (address && address !== '--') {
     const addrFormatted = address
       .replace(/,\s*(Attn:)/g, '\n$1')
-      .replace(/,\s*(\d)/g, '\n$2')
+      .replace(/,\s*(\d)/g, '\n$1')
       .replace(/,\s*([A-Z][a-z])/g, '\n$1')
       .replace(/,\s*(\()/g, '\n$1')
       .trim();
     document.getElementById('address').value = addrFormatted;
   }
 
-  // Ship date: pass through as-is (already formatted like "Friday, May 15, 2026")
-  if (shipDate && shipDate !== '--') {
-    document.getElementById('ship_date').value = shipDate;
-  }
+  if (shipDate && shipDate !== '--') document.getElementById('ship_date').value = shipDate;
+  if (payLink  && payLink  !== '--') document.getElementById('payment_link').value = payLink;
 
-  if (payLink && payLink !== '--') {
-    document.getElementById('payment_link').value = payLink;
-  }
+  const urlMap   = [['e','Product #1'],['f','Product #2'],['g','Product #3']];
+  const descMap  = [['h','Description #1'],['i','Description #2'],['j','Description #3']];
+  const qtyMap   = [['k','Quantity #1'],['l','Quantity #2'],['m','Quantity #3'],['n','Quantity #4'],['o','Quantity #5']];
+  const priceMap = [['p','Price #1'],['q','Price #2'],['r','Price #3'],['s','Price #4'],['t','Price #5']];
 
-  // URLs (e=product1, f=product2, g=product3)
-  const urlLetters   = [['e','Product #1'],['f','Product #2'],['g','Product #3']];
-  const descLetters  = [['h','Description #1'],['i','Description #2'],['j','Description #3']];
-  const qtyLetters   = [['k','Quantity #1'],['l','Quantity #2'],['m','Quantity #3'],['n','Quantity #4'],['o','Quantity #5']];
-  const priceLetters = [['p','Price #1'],['q','Price #2'],['r','Price #3'],['s','Price #4'],['t','Price #5']];
+  const urls   = urlMap.map(([l,h])   => getField(l, h));
+  const descs  = descMap.map(([l,h])  => getField(l, h));
+  const qtys   = qtyMap.map(([l,h])   => parseFloat(getField(l,h).replace(/[^0-9.]/g,'')) || 0);
+  const prices = priceMap.map(([l,h]) => parseFloat(getField(l,h).replace(/[^0-9.]/g,'')) || 0);
 
-  const urls   = urlLetters.map(([l,h])   => getField(l, h));
-  const descs  = descLetters.map(([l,h])  => getField(l, h));
-  const qtys   = qtyLetters.map(([l,h])   => parseFloat(getField(l, h).replace(/[^0-9.]/g,'')) || 0);
-  const prices = priceLetters.map(([l,h]) => parseFloat(getField(l, h).replace(/[^0-9.]/g,'')) || 0);
-
-  // Shipping
   const shippingVal = getField('w', 'Shipping Cost');
   if (shippingVal && shippingVal !== '--') {
     const sv = parseFloat(shippingVal.replace(/[^0-9.]/g,'')) || 0;
     if (sv > 0) document.getElementById('shipping').value = sv;
   }
 
-  // Count active items: qty > 0 and not '--'
-  const activeCount = qtys.filter((q, i) => q > 0 && (urls[i] !== '--' || descs[i] !== '--')).length;
-  const numItems = Math.max(1, Math.min(activeCount || descs.filter(d => d && d !== '--').length, 5));
+  const numItems = Math.max(1, Math.min(qtys.filter(q => q > 0).length || descs.filter(d => d && d !== '--').length, 5));
 
-  // Rebuild items
   document.getElementById('items-container').innerHTML = '';
   itemCount = 0;
   for (let i = 0; i < numItems; i++) {
     addItem();
     const n = i + 1;
-    if (urls[i] && urls[i] !== '--')   document.getElementById('url_' + n).value = urls[i];
-    if (descs[i] && descs[i] !== '--') {
-      // Convert " / " separators to newlines
-      const cleanDesc = descs[i].replace(/ \/ /g, '\n').trim();
-      document.getElementById('desc_' + n).value = cleanDesc;
-    }
-    if (qtys[i] > 0)   document.getElementById('qty_' + n).value = qtys[i];
-    if (prices[i] > 0) document.getElementById('price_' + n).value = prices[i];
+    if (urls[i]   && urls[i]   !== '--') document.getElementById('url_'   + n).value = urls[i];
+    if (descs[i]  && descs[i]  !== '--') document.getElementById('desc_'  + n).value = descs[i].replace(/ \/ /g, '\n');
+    if (qtys[i]   > 0)                   document.getElementById('qty_'   + n).value = qtys[i];
+    if (prices[i] > 0)                   document.getElementById('price_' + n).value = prices[i];
     calcItem(n);
   }
 
   calcTotals();
-
   const info = document.getElementById('parse-info');
   info.style.display = 'block';
-  info.textContent = '✓ Filled ' + numItems + ' item' + (numItems > 1 ? 's' : '') + ' from HubSpot data — review and adjust as needed';
+  info.textContent = '✓ Filled ' + numItems + ' item' + (numItems > 1 ? 's' : '') + ' — review and adjust as needed';
 }
 
 // ── ITEM MANAGEMENT ──
