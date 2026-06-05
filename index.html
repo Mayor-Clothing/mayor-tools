@@ -210,10 +210,11 @@ function parseHubspot() {
     if (urls[i]   && urls[i]   !== '--') document.getElementById('url_'   + n).value = urls[i];
     if (descs[i]  && descs[i]  !== '--') document.getElementById('desc_'  + n).value = descs[i].replace(/ \/ /g, '\n');
     if (qtys[i] > 0)   document.getElementById('qty_' + n).value = qtys[i];
-    // If price is $0 but item 1 had a price, treat as comped — set orig_price to item 1 price
-    if (prices[i] === 0 && prices[0] > 0 && qtys[i] > 0) {
-      document.getElementById('orig_price_' + n).value = prices[0];
-      document.getElementById('price_' + n).value = 0;
+    // If price is $0 but a previous item had a price, treat as comped
+    const firstPrice = prices.find(p => p > 0) || 0;
+    if (prices[i] === 0 && firstPrice > 0 && qtys[i] > 0) {
+      document.getElementById('orig_price_' + n).value = firstPrice.toFixed(2);
+      document.getElementById('price_' + n).value = '0';
     } else if (prices[i] > 0) {
       document.getElementById('price_' + n).value = prices[i];
     }
