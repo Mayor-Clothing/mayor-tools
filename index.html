@@ -195,6 +195,18 @@ function parseHubspot() {
     if (sv > 0) document.getElementById('shipping').value = sv;
   }
 
+  const embroideryVal = get('za. Embroidery');
+  if (embroideryVal && embroideryVal !== '--') {
+    const ev = parseFloat(embroideryVal.replace(/[^0-9.]/g,'')) || 0;
+    if (ev > 0) document.getElementById('embroidery').value = ev;
+  }
+
+  const artVal = get('zb. Art');
+  if (artVal && artVal !== '--') {
+    const av = parseFloat(artVal.replace(/[^0-9.]/g,'')) || 0;
+    if (av > 0) document.getElementById('art_setup').value = av;
+  }
+
   // Count items: any with qty>0 OR a real description
   let numItems = 0;
   for (let i = 0; i < 5; i++) {
