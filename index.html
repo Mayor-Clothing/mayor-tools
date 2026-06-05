@@ -73,6 +73,10 @@
       <div class="field"><label>Ship Date</label><input id="ship_date" placeholder="Friday, May 29, 2026" /></div>
       <div class="field"><label>Payment Link (Nickel)</label><input id="payment_link" placeholder="https://nickel.com/pay/..." /></div>
     </div>
+    <div class="field">
+      <label>Customer Email</label>
+      <input id="customer_email" type="email" placeholder="timfleming@okccgc.com" />
+    </div>
   </div>
 
   <!-- LINE ITEMS -->
@@ -194,6 +198,9 @@ function parseHubspot() {
     const sv = parseFloat(shippingVal.replace(/[^0-9.]/g,'')) || 0;
     if (sv > 0) document.getElementById('shipping').value = sv;
   }
+
+  const customerEmail = get('customer_email') || get('customer email');
+  if (customerEmail && customerEmail !== '--') document.getElementById('customer_email').value = customerEmail;
 
   const embroideryVal = get('za. Embroidery');
   if (embroideryVal && embroideryVal !== '--') {
@@ -326,11 +333,12 @@ async function generate() {
   }
 
   const payload = {
-    order_number: val('order_number'),
-    club:         val('club'),
-    address:      val('address'),
-    ship_date:    val('ship_date'),
-    payment_link: val('payment_link'),
+    order_number:   val('order_number'),
+    club:           val('club'),
+    address:        val('address'),
+    ship_date:      val('ship_date'),
+    customer_email: val('customer_email'),
+    payment_link:   val('payment_link'),
     line_items:   lineItems,
     subtotal:     num('subtotal'),
     embroidery:   num('embroidery') || null,
