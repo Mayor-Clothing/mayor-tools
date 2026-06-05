@@ -132,24 +132,39 @@ function parseHubspot() {
   const raw = document.getElementById('hubspot-paste').value;
   if (!raw.trim()) return;
 
-  function getField(letter, hint) {
-    // Handles both "* a. Label" and "a. Label" (first field has no *)
-    // Followed by optional blank line, then optional "* ", then "Details", then value
-    const escapedHint = hint.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const escapedLetter = letter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const re = new RegExp(
-      '(?:\\*\\s*)?' + escapedLetter + '\\.\\s*' + escapedHint + '[^\n]*\n\\s*\n?\\s*(?:\\*\\s*)?Details\\s*\n([^\n]+)',
-      'i'
-    );
-    const m = raw.match(re);
-    return m ? m[1].trim() : '';
+  // Simplest possible approach: split on "Details" and grab the line after each one
+  // Structure is always: Label -> (blank line) -> Details -> Value
+  const lines = raw.split('\n').map(l => l.trim());
+  const data = {};
+
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].toLowerCase() === 'details' && i + 1 < lines.length) {
+      // Find the label line before this Details line (skip blank lines going backwards)
+      let labelIdx = i - 1;
+      while (labelIdx >= 0 && lines[labelIdx] === '') labelIdx--;
+      if (labelIdx >= 0) {
+        const label = lines[labelIdx].replace(/^\*\s*/, '').trim(); // strip leading "* "
+        const value = lines[i + 1] ? lines[i + 1].trim() : '';
+        data[label] = value;
+      }
+    }
   }
 
-  const orderNum = getField('a', 'Order Number');
-  const club     = getField('b', 'Club');
-  const address  = getField('c', 'Shipping');
-  const shipDate = getField('d', 'Shipping Date');
-  const payLink  = getField('y', 'Payment Link');
+  console.log('Parsed data:', JSON.stringify(data, null, 2));
+
+  // Helper to find value by matching label prefix
+  function get(prefix) {
+    for (const key of Object.keys(data)) {
+      if (key.toLowerCase().startsWith(prefix.toLowerCase())) return data[key] || '';
+    }
+    return '';
+  }
+
+  const orderNum = get('a. Order');
+  const club     = get('b. Club');
+  const address  = get('c. Shipping');
+  const shipDate = get('d. Shipping');
+  const payLink  = get('y. Payment');
 
   if (orderNum) document.getElementById('order_number').value = orderNum;
   if (club)     document.getElementById('club').value = club;
@@ -165,19 +180,14 @@ function parseHubspot() {
   }
 
   if (shipDate && shipDate !== '--') document.getElementById('ship_date').value = shipDate;
-  if (payLink  && payLink  !== '--') document.getElementById('payment_link').value = payLink;
+  if (payLink  && payLink  !== '--' && payLink !== '') document.getElementById('payment_link').value = payLink;
 
-  const urlMap   = [['e','Product #1'],['f','Product #2'],['g','Product #3']];
-  const descMap  = [['h','Description #1'],['i','Description #2'],['j','Description #3']];
-  const qtyMap   = [['k','Quantity #1'],['l','Quantity #2'],['m','Quantity #3'],['n','Quantity #4'],['o','Quantity #5']];
-  const priceMap = [['p','Price #1'],['q','Price #2'],['r','Price #3'],['s','Price #4'],['t','Price #5']];
+  const urls   = ['e. Product #1','f. Product #2','g. Product #3'].map(k => get(k));
+  const descs  = ['h. Description #1','i. Description #2','j. Description #3'].map(k => get(k));
+  const qtys   = ['k. Quantity #1','l. Quantity #2','m. Quantity #3','n. Quantity #4','o. Quantity #5'].map(k => parseFloat((get(k)||'').replace(/[^0-9.]/g,'')) || 0);
+  const prices = ['p. Price #1','q. Price #2','r. Price #3','s. Price #4','t. Price #5'].map(k => parseFloat((get(k)||'').replace(/[^0-9.]/g,'')) || 0);
 
-  const urls   = urlMap.map(([l,h])   => getField(l, h));
-  const descs  = descMap.map(([l,h])  => getField(l, h));
-  const qtys   = qtyMap.map(([l,h])   => parseFloat(getField(l,h).replace(/[^0-9.]/g,'')) || 0);
-  const prices = priceMap.map(([l,h]) => parseFloat(getField(l,h).replace(/[^0-9.]/g,'')) || 0);
-
-  const shippingVal = getField('w', 'Shipping Cost');
+  const shippingVal = get('w. Shipping');
   if (shippingVal && shippingVal !== '--') {
     const sv = parseFloat(shippingVal.replace(/[^0-9.]/g,'')) || 0;
     if (sv > 0) document.getElementById('shipping').value = sv;
