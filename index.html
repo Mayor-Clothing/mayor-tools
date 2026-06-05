@@ -8,7 +8,6 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: system-ui, sans-serif; background: #f5f5f4; color: #1a1a18; padding: 2rem 1rem; }
   .container { max-width: 600px; margin: 0 auto; }
-  .logo { font-size: 18px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 1.5rem; }
   .card { background: #fff; border: 1px solid #e5e5e3; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
   .section-title { font-size: 11px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
   .field { margin-bottom: 10px; }
@@ -21,10 +20,11 @@
   input[readonly] { background: #f9f9f8; color: #555; }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-  .row4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
   button.primary { width: 100%; padding: 11px; font-size: 14px; font-family: inherit; border: none; border-radius: 8px; background: #1a1a18; color: white; cursor: pointer; }
   button.primary:hover { background: #333; }
   button.primary:disabled { opacity: 0.5; cursor: default; }
+  button.secondary { width: 100%; padding: 10px; font-size: 13px; font-family: inherit; border: 1px solid #ccc; border-radius: 8px; background: #fff; color: #1a1a18; cursor: pointer; }
+  button.secondary:hover { background: #f5f5f4; }
   .status { margin-top: 10px; font-size: 13px; padding: 10px 12px; border-radius: 8px; display: none; }
   .success { background: #eaf3de; color: #3b6d11; display: block; }
   .error   { background: #fcebeb; color: #a32d2d; display: block; }
@@ -33,20 +33,32 @@
   .item-block { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f0f0ee; }
   .item-block:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
   .item-label { font-size: 11px; font-weight: 500; color: #666; margin-bottom: 6px; }
-  .fee-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
-  .checkbox-row { display: flex; align-items: center; gap: 6px; padding-top: 22px; }
+  .checkbox-row { display: flex; align-items: center; gap: 6px; }
   .checkbox-row input[type="checkbox"] { width: auto; margin: 0; }
   .checkbox-row label { font-size: 12px; color: #666; margin: 0; white-space: nowrap; }
-  .totals-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
   .subtotal-display { background: #f9f9f8; border-radius: 8px; padding: 10px 12px; font-size: 13px; display: flex; justify-content: space-between; margin-top: 8px; }
   .subtotal-display span:first-child { color: #888; }
   .subtotal-display span:last-child { font-weight: 500; }
+  .paste-area { min-height: 100px; font-size: 12px; font-family: monospace; }
+  .parse-info { font-size: 11px; color: #3b6d11; margin-top: 6px; display: none; }
 </style>
 </head>
 <body>
 <div class="container">
   <img src="Mayor_Logo_transparent.png" style="width:120px; margin-bottom:1.5rem; display:block;" />
 
+  <!-- PASTE FROM HUBSPOT -->
+  <div class="card">
+    <p class="section-title">Paste from HubSpot</p>
+    <div class="field">
+      <label>Copy the invoice section from HubSpot and paste it here</label>
+      <textarea id="hubspot-paste" class="paste-area" placeholder="Paste HubSpot invoice data here…"></textarea>
+    </div>
+    <button class="secondary" onclick="parseHubspot()">Auto-fill from HubSpot data</button>
+    <div class="parse-info" id="parse-info"></div>
+  </div>
+
+  <!-- ORDER INFO -->
   <div class="card">
     <p class="section-title">Order Info</p>
     <div class="row2">
@@ -54,7 +66,7 @@
       <div class="field"><label>Club</label><input id="club" /></div>
     </div>
     <div class="field">
-      <label>Shipping / Billing Address (one line per line)</label>
+      <label>Shipping / Billing Address</label>
       <textarea id="address" rows="3" placeholder="Club Name&#10;Attn: Name&#10;Street&#10;City, State ZIP&#10;Phone"></textarea>
     </div>
     <div class="row2">
@@ -63,6 +75,7 @@
     </div>
   </div>
 
+  <!-- LINE ITEMS -->
   <div class="card">
     <p class="section-title">Line Items</p>
     <div id="items-container"></div>
@@ -70,7 +83,6 @@
       <button class="toggle" id="btn-add" onclick="addItem()">+ Add item</button>
       <button class="toggle" id="btn-remove" onclick="removeItem()" style="display:none;">− Remove last item</button>
     </div>
-
     <div style="margin-top:14px; padding-top:14px; border-top:1px solid #f0f0ee;">
       <div class="row2">
         <div class="subtotal-display"><span>Total Quantity</span><span id="total-qty-display">0</span></div>
@@ -79,25 +91,26 @@
     </div>
   </div>
 
+  <!-- FEES -->
   <div class="card">
     <p class="section-title">Fees</p>
-    <div class="fee-row">
+    <div class="row2">
       <div class="field"><label>Embroidery Fee</label><input id="embroidery" type="number" step="0.01" placeholder="0.00" oninput="calcTotals()" /></div>
       <div class="field"><label>Art Fee</label><input id="art_setup" type="number" step="0.01" placeholder="0.00" oninput="calcTotals()" /></div>
-      <div style="padding-bottom:10px;"></div>
     </div>
-    <div class="row2">
-      <div class="checkbox-row" style="padding-top:0;">
+    <div class="row2" style="margin-top:4px;">
+      <div class="checkbox-row">
         <input type="checkbox" id="strike_embroidery" checked />
         <label for="strike_embroidery">Cross out embroidery</label>
       </div>
-      <div class="checkbox-row" style="padding-top:0;">
+      <div class="checkbox-row">
         <input type="checkbox" id="strike_art" checked />
         <label for="strike_art">Cross out art fee</label>
       </div>
     </div>
   </div>
 
+  <!-- TOTALS -->
   <div class="card">
     <p class="section-title">Totals</p>
     <div class="row3">
@@ -114,6 +127,134 @@
 <script>
 let itemCount = 0;
 
+// ── HUBSPOT PARSER ──
+function parseHubspot() {
+  const raw = document.getElementById('hubspot-paste').value;
+  if (!raw.trim()) return;
+
+  function extract(label) {
+    // Match "* <label>\n* Details\n<value>" pattern
+    const re = new RegExp(label + '[\\s\\S]*?\\* Details\\s*\\n([^\\n*]+(?:\\n(?!\\*)[^\\n*]+)*)', 'i');
+    const m = raw.match(re);
+    return m ? m[1].trim() : '';
+  }
+
+  function extractSimple(label) {
+    // For single-line values
+    const re = new RegExp(label + '[\\s\\S]*?\\* Details\\s*\\n([^\\n]+)', 'i');
+    const m = raw.match(re);
+    return m ? m[1].trim() : '';
+  }
+
+  // Order info
+  const orderNum = extractSimple('a\\. Order Number');
+  const club     = extractSimple('b\\. Club');
+  const address  = extractSimple('c\\. Shipping');
+  const shipDate = extractSimple('d\\. Shipping Date');
+  const payLink  = extractSimple('y\\. Payment Link');
+
+  if (orderNum) document.getElementById('order_number').value = orderNum;
+  if (club)     document.getElementById('club').value = club;
+
+  // Format address — HubSpot smashes it together, try to split on known patterns
+  if (address) {
+    const formatted = address
+      .replace(/(Attn:)/g, '\n$1')
+      .replace(/(\d{4,5}\s[A-Z])/g, '\n$1')  // street number
+      .replace(/([A-Z][a-z]+,?\s+[A-Z]{2}\s+\d{5})/g, '\n$1')  // City, ST ZIP
+      .replace(/(\(\d{3}\))/g, '\n$1')  // phone
+      .replace(/([a-z])([A-Z])/g, '$1\n$2')  // camelCase split
+      .trim();
+    document.getElementById('address').value = formatted;
+  }
+
+  // Format date
+  if (shipDate) {
+    const d = new Date(shipDate);
+    if (!isNaN(d)) {
+      const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      document.getElementById('ship_date').value = `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+    } else {
+      document.getElementById('ship_date').value = shipDate;
+    }
+  }
+
+  if (payLink && payLink !== '--') document.getElementById('payment_link').value = payLink;
+
+  // Products, descriptions, quantities, prices
+  const products     = [1,2,3,4,5].map(i => extractSimple(String.fromCharCode(100+i) + '\\. Product #' + i));
+  const descriptions = [1,2,3,4,5].map(i => extractSimple(['h','i','j','k_desc','l_desc'][i-1] ? '' : '').trim());
+
+  // Use letter mapping for descriptions
+  const descLetters = ['h','i','j'];
+  const descs = descLetters.map(l => {
+    const re = new RegExp('\\* ' + l + '\\. Description[\\s\\S]*?\\* Details\\s*\\n([^\\n]+(?:\\n(?!\\*)[^\\n*]+)*)', 'i');
+    const m = raw.match(re);
+    return m ? m[1].trim() : '';
+  });
+
+  const qtyLetters = ['k','l','m','n','o'];
+  const qtys = qtyLetters.map(l => {
+    const re = new RegExp('\\* ' + l + '\\. Quantity[\\s\\S]*?\\* Details\\s*\\n([^\\n]+)', 'i');
+    const m = raw.match(re);
+    return m ? parseFloat(m[1].replace(/[^0-9.]/g, '')) || 0 : 0;
+  });
+
+  const priceLetters = ['p','q','r','s','t'];
+  const prices = priceLetters.map(l => {
+    const re = new RegExp('\\* ' + l + '\\. Price[\\s\\S]*?\\* Details\\s*\\n([^\\n]+)', 'i');
+    const m = raw.match(re);
+    return m ? parseFloat(m[1].replace(/[^0-9.]/g, '')) || 0 : 0;
+  });
+
+  const productLetters = ['e','f','g','h_prod','i_prod'];
+  const urls = ['e','f','g'].map(l => {
+    const re = new RegExp('\\* ' + l + '\\. Product[\\s\\S]*?\\* Details\\s*\\n([^\\n]+)', 'i');
+    const m = raw.match(re);
+    return m ? m[1].trim() : '';
+  });
+
+  // Shipping
+  const shippingMatch = raw.match(/w\.\s*Shipping Cost[\s\S]*?\* Details\s*\n([^\n]+)/i);
+  if (shippingMatch) {
+    const sv = parseFloat(shippingMatch[1].replace(/[^0-9.]/g, '')) || 0;
+    document.getElementById('shipping').value = sv > 0 ? sv : '';
+  }
+
+  // Figure out how many real items there are
+  const activeItems = qtys.filter((q, i) => q > 0 && (descs[i] || urls[i])).length || 
+                      qtys.filter(q => q > 0).length;
+  const numItems = Math.max(1, Math.min(activeItems, 5));
+
+  // Clear existing items and rebuild
+  document.getElementById('items-container').innerHTML = '';
+  itemCount = 0;
+  for (let i = 0; i < numItems; i++) {
+    addItem();
+    const n = i + 1;
+    if (urls[i])  document.getElementById('url_' + n).value = urls[i];
+    if (descs[i]) {
+      // Fix run-together description text
+      const cleanDesc = descs[i]
+        .replace(/([a-z])([A-Z])/g, '$1\n$2')
+        .replace(/(Icons:|Style:|Colors:|Left Chest|Print:|XS:|S:|M:|L:|XL:|XXL:|3XL:)/g, '\n$1')
+        .replace(/\n+/g, '\n').trim();
+      document.getElementById('desc_' + n).value = cleanDesc;
+    }
+    if (qtys[i])   { document.getElementById('qty_' + n).value = qtys[i]; }
+    if (prices[i]) { document.getElementById('price_' + n).value = prices[i]; }
+    calcItem(n);
+  }
+
+  calcTotals();
+
+  const info = document.getElementById('parse-info');
+  info.style.display = 'block';
+  info.textContent = `✓ Filled ${numItems} item${numItems > 1 ? 's' : ''} from HubSpot data — review and adjust as needed`;
+}
+
+// ── ITEM MANAGEMENT ──
 function addItem() {
   itemCount++;
   const n = itemCount;
@@ -156,11 +297,9 @@ function calcTotals() {
     totalQty += parseFloat(document.getElementById('qty_' + i)?.value) || 0;
     totalAmt += parseFloat(document.getElementById('amount_' + i)?.value) || 0;
   }
-
   document.getElementById('total-qty-display').textContent = totalQty;
   document.getElementById('total-price-display').textContent = '$' + totalAmt.toFixed(2);
   document.getElementById('subtotal').value = totalAmt > 0 ? totalAmt.toFixed(2) : '';
-
   const shipping = parseFloat(document.getElementById('shipping').value) || 0;
   const grandTotal = totalAmt + shipping;
   document.getElementById('total').value = grandTotal > 0 ? grandTotal.toFixed(2) : '';
@@ -193,9 +332,6 @@ async function generate() {
     });
   }
 
-  const embroidery = num('embroidery');
-  const artSetup   = num('art_setup');
-
   const payload = {
     order_number: val('order_number'),
     club:         val('club'),
@@ -204,9 +340,9 @@ async function generate() {
     payment_link: val('payment_link'),
     line_items:   lineItems,
     subtotal:     num('subtotal'),
-    embroidery:   embroidery || null,
+    embroidery:   num('embroidery') || null,
     strike_embroidery: checked('strike_embroidery'),
-    art_setup:    artSetup || null,
+    art_setup:    num('art_setup') || null,
     strike_art:   checked('strike_art'),
     shipping:     num('shipping'),
     total:        num('total')
