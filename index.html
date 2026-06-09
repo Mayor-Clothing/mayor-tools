@@ -58,6 +58,15 @@
     <div class="parse-info" id="parse-info"></div>
   </div>
 
+  <!-- DOCUMENT TYPE TOGGLE -->
+  <div class="card">
+    <p class="section-title">Document Type</p>
+    <div style="display:flex; gap:10px;">
+      <button id="btn-invoice" onclick="setDocType('invoice')" style="flex:1; padding:10px; font-family:inherit; font-size:13px; border-radius:8px; border:2px solid #1a1a18; background:#1a1a18; color:white; cursor:pointer;">Invoice</button>
+      <button id="btn-confirmation" onclick="setDocType('confirmation')" style="flex:1; padding:10px; font-family:inherit; font-size:13px; border-radius:8px; border:2px solid #ccc; background:white; color:#1a1a18; cursor:pointer;">Order Confirmation</button>
+    </div>
+  </div>
+
   <!-- ORDER INFO -->
   <div class="card">
     <p class="section-title">Order Info</p>
@@ -309,6 +318,18 @@ function val(id) { const el = document.getElementById(id); return el ? el.value.
 function num(id) { const el = document.getElementById(id); return parseFloat(el?.value) || 0; }
 function checked(id) { const el = document.getElementById(id); return el ? el.checked : false; }
 
+let docType = 'invoice';
+function setDocType(type) {
+  docType = type;
+  document.getElementById('btn-invoice').style.background = type === 'invoice' ? '#1a1a18' : 'white';
+  document.getElementById('btn-invoice').style.color = type === 'invoice' ? 'white' : '#1a1a18';
+  document.getElementById('btn-invoice').style.borderColor = type === 'invoice' ? '#1a1a18' : '#ccc';
+  document.getElementById('btn-confirmation').style.background = type === 'confirmation' ? '#1a1a18' : 'white';
+  document.getElementById('btn-confirmation').style.color = type === 'confirmation' ? 'white' : '#1a1a18';
+  document.getElementById('btn-confirmation').style.borderColor = type === 'confirmation' ? '#1a1a18' : '#ccc';
+  document.getElementById('gen-btn').textContent = type === 'invoice' ? 'Generate Invoice PDF' : 'Generate Order Confirmation PDF';
+}
+
 async function generate() {
   const btn = document.getElementById('gen-btn');
   const status = document.getElementById('status');
@@ -333,6 +354,7 @@ async function generate() {
   }
 
   const payload = {
+    type:           docType,
     order_number:   val('order_number'),
     club:           val('club'),
     address:        val('address'),
@@ -360,7 +382,7 @@ async function generate() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Mayor-Invoice-${payload.order_number || 'draft'}.pdf`;
+    a.download = `Mayor-${docType === 'confirmation' ? 'Order-Confirmation' : 'Invoice'}-${payload.order_number || 'draft'}.pdf`;
     a.click();
     status.className = 'status success';
     status.textContent = '✓ Invoice downloaded!';
