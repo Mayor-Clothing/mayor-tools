@@ -199,6 +199,7 @@ function parseHubspot() {
 
   const urls   = ['e. Product #1','f. Product #2','g. Product #3'].map(k => get(k));
   const descs  = ['h. Description #1','i. Description #2','j. Description #3'].map(k => get(k));
+  const sizes  = ['Sizes #1','Sizes #2','Sizes #3','Sizes #4','Sizes #5'].map(k => get(k));
   const qtys   = ['k. Quantity #1','l. Quantity #2','m. Quantity #3','n. Quantity #4','o. Quantity #5'].map(k => parseFloat((get(k)||'').replace(/[^0-9.]/g,'')) || 0);
   const prices = ['p. Price #1','q. Price #2','r. Price #3','s. Price #4','t. Price #5'].map(k => parseFloat((get(k)||'').replace(/[^0-9.]/g,'')) || 0);
 
@@ -237,6 +238,7 @@ function parseHubspot() {
     const n = i + 1;
     if (urls[i]   && urls[i]   !== '--') document.getElementById('url_'   + n).value = urls[i];
     if (descs[i]  && descs[i]  !== '--') document.getElementById('desc_'  + n).value = descs[i].replace(/ \/ /g, '\n');
+    if (sizes[i]  && sizes[i]  !== '--') document.getElementById('sizes_' + n).value = sizes[i];
     if (qtys[i] > 0)   document.getElementById('qty_' + n).value = qtys[i];
     // If price is $0 and same URL as a previous item, use that item's price as orig_price
     if (prices[i] === 0 && qtys[i] > 0) {
@@ -274,6 +276,7 @@ function addItem() {
     <p class="item-label">Item ${n}</p>
     <div class="field"><label>Product URL</label><input id="url_${n}" placeholder="https://mayorclothing.com/products/..." /></div>
     <div class="field"><label>Description (verbatim)</label><textarea id="desc_${n}" rows="4"></textarea></div>
+    <div class="field"><label>Sizes (e.g. S: 2 - M: 8 - L: 10)</label><input id="sizes_${n}" placeholder="S: 2 - M: 8 - L: 10" /></div>
     <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px;">
       <div class="field"><label>Qty</label><input id="qty_${n}" type="number" placeholder="24" oninput="calcItem(${n})" /></div>
       <div class="field"><label>Original Price (struck)</label><input id="orig_price_${n}" type="number" step="0.01" placeholder="optional" /></div>
@@ -341,11 +344,13 @@ async function generate() {
   for (let i = 1; i <= itemCount; i++) {
     const qty = num('qty_' + i);
     const desc = val('desc_' + i);
+    const sizesVal = val('sizes_' + i);
     if (!qty && !desc) continue;
+    const fullDesc = sizesVal ? desc + (desc ? '\n' : '') + sizesVal : desc;
     lineItems.push({
       product: 'Custom Print Polo',
       url: val('url_' + i),
-      description: desc,
+      description: fullDesc,
       quantity: qty,
       orig_price: num('orig_price_' + i) || null,
       price: num('price_' + i),
