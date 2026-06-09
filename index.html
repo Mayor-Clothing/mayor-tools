@@ -62,8 +62,8 @@
   <div class="card">
     <p class="section-title">Document Type</p>
     <div style="display:flex; gap:10px;">
-      <button id="btn-confirmation" onclick="setDocType('confirmation')" style="flex:1; padding:10px; font-family:inherit; font-size:13px; border-radius:8px; border:2px solid #ccc; background:white; color:#1a1a18; cursor:pointer;">Order Confirmation</button>
-      <button id="btn-invoice" onclick="setDocType('invoice')" style="flex:1; padding:10px; font-family:inherit; font-size:13px; border-radius:8px; border:2px solid #1a1a18; background:#1a1a18; color:white; cursor:pointer;">Invoice</button>
+      <button id="btn-confirmation" onclick="setDocType('confirmation')" style="flex:1; padding:10px; font-family:inherit; font-size:13px; border-radius:8px; border:2px solid #1a1a18; background:#1a1a18; color:white; cursor:pointer;">Order Confirmation</button>
+      <button id="btn-invoice" onclick="setDocType('invoice')" style="flex:1; padding:10px; font-family:inherit; font-size:13px; border-radius:8px; border:2px solid #ccc; background:white; color:#1a1a18; cursor:pointer;">Invoice</button>
     </div>
   </div>
 
@@ -133,7 +133,7 @@
     </div>
   </div>
 
-  <button class="primary" id="gen-btn" onclick="generate()">Generate Invoice PDF</button>
+  <button class="primary" id="gen-btn" onclick="generate()">Generate Order Confirmation PDF</button>
   <div class="status" id="status"></div>
 </div>
 
@@ -321,7 +321,7 @@ function val(id) { const el = document.getElementById(id); return el ? el.value.
 function num(id) { const el = document.getElementById(id); return parseFloat(el?.value) || 0; }
 function checked(id) { const el = document.getElementById(id); return el ? el.checked : false; }
 
-let docType = 'invoice';
+let docType = 'confirmation';
 function setDocType(type) {
   docType = type;
   document.getElementById('btn-invoice').style.background = type === 'invoice' ? '#1a1a18' : 'white';
