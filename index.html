@@ -86,6 +86,10 @@
       <label>Customer Email</label>
       <input id="customer_email" type="email" placeholder="timfleming@okccgc.com" />
     </div>
+    <div class="field">
+      <label>Product Page URL</label>
+      <input id="product_page" placeholder="https://mayorclothing.com/products/..." />
+    </div>
   </div>
 
   <!-- LINE ITEMS -->
@@ -197,6 +201,9 @@ function parseHubspot() {
   if (shipDate && shipDate !== '--') document.getElementById('ship_date').value = shipDate;
   if (payLink  && payLink  !== '--' && payLink !== '') document.getElementById('payment_link').value = payLink;
 
+  const productPage = get('Product Page');
+  if (productPage && productPage !== '--') document.getElementById('product_page').value = productPage;
+
   const urls   = ['e. Product #1','f. Product #2','g. Product #3'].map(k => get(k));
   const descs  = ['h. Description #1','i. Description #2','j. Description #3'].map(k => get(k));
   const sizes  = ['Sizes #1','Sizes #2','Sizes #3','Sizes #4','Sizes #5'].map(k => get(k));
@@ -274,7 +281,7 @@ function addItem() {
   div.id = 'item-block-' + n;
   div.innerHTML = `
     <p class="item-label">Item ${n}</p>
-    <div class="field"><label>Product URL</label><input id="url_${n}" placeholder="https://mayorclothing.com/products/..." /></div>
+    <div class="field"><label>Image URL</label><input id="url_${n}" placeholder="https://mayorclothing.com/cdn/shop/files/..." /></div>
     <div class="field"><label>Description (verbatim)</label><textarea id="desc_${n}" rows="4"></textarea></div>
     <div class="field"><label>Sizes (e.g. S: 2 - M: 8 - L: 10)</label><input id="sizes_${n}" placeholder="S: 2 - M: 8 - L: 10" /></div>
     <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px;">
@@ -365,6 +372,7 @@ async function generate() {
     address:        val('address'),
     ship_date:      val('ship_date'),
     customer_email: val('customer_email'),
+    product_page:   val('product_page'),
     payment_link:   val('payment_link'),
     line_items:   lineItems,
     subtotal:     num('subtotal'),
