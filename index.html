@@ -3,49 +3,196 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mayor Invoice Generator</title>
+<title>Mayor Tools</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<!-- ── SHARED BASE STYLES (invoice generator, unchanged) ── -->
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, sans-serif; background: #f5f5f4; color: #1a1a18; padding: 2rem 1rem; }
-  .container { max-width: 600px; margin: 0 auto; }
-  .card { background: #fff; border: 1px solid #e5e5e3; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
-  .section-title { font-size: 11px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
-  .field { margin-bottom: 10px; }
-  label { font-size: 12px; color: #666; display: block; margin-bottom: 4px; }
-  input, textarea, select { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 7px; font-size: 13px; font-family: inherit; background: #fff; color: #1a1a18; }
-  input[type="number"] { -moz-appearance: textfield; }
-  input[type="number"]::-webkit-inner-spin-button { opacity: 1; }
-  textarea { resize: vertical; min-height: 60px; }
-  input:focus, textarea:focus { outline: 2px solid #378add; outline-offset: 1px; }
-  input[readonly] { background: #f9f9f8; color: #555; }
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-  button.primary { width: 100%; padding: 11px; font-size: 14px; font-family: inherit; border: none; border-radius: 8px; background: #1a1a18; color: white; cursor: pointer; }
-  button.primary:hover { background: #333; }
-  button.primary:disabled { opacity: 0.5; cursor: default; }
-  button.secondary { width: 100%; padding: 10px; font-size: 13px; font-family: inherit; border: 1px solid #ccc; border-radius: 8px; background: #fff; color: #1a1a18; cursor: pointer; }
-  button.secondary:hover { background: #f5f5f4; }
-  .status { margin-top: 10px; font-size: 13px; padding: 10px 12px; border-radius: 8px; display: none; }
-  .success { background: #eaf3de; color: #3b6d11; display: block; }
-  .error   { background: #fcebeb; color: #a32d2d; display: block; }
-  .loading { background: #e6f1fb; color: #185fa5; display: block; }
-  .toggle { font-size: 12px; color: #888; cursor: pointer; text-decoration: underline; background: none; border: none; padding: 0; margin-top: 4px; width: auto; }
-  .item-block { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f0f0ee; }
-  .item-block:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-  .item-label { font-size: 11px; font-weight: 500; color: #666; margin-bottom: 6px; }
-  .checkbox-row { display: flex; align-items: center; gap: 6px; }
-  .checkbox-row input[type="checkbox"] { width: auto; margin: 0; }
-  .checkbox-row label { font-size: 12px; color: #666; margin: 0; white-space: nowrap; }
-  .subtotal-display { background: #f9f9f8; border-radius: 8px; padding: 10px 12px; font-size: 13px; display: flex; justify-content: space-between; margin-top: 8px; }
-  .subtotal-display span:first-child { color: #888; }
-  .subtotal-display span:last-child { font-weight: 500; }
-  .paste-area { min-height: 100px; font-size: 12px; font-family: monospace; }
-  .parse-info { font-size: 11px; color: #3b6d11; margin-top: 6px; display: none; }
+  body { font-family: system-ui, sans-serif; background: #f5f5f4; color: #1a1a18; }
+
+  /* ── Top nav ── */
+  .top-nav {
+    background: #1a1a18; color: white;
+    display: flex; align-items: center; gap: 0;
+    position: sticky; top: 0; z-index: 200;
+  }
+  .top-nav .logo-area {
+    padding: 12px 20px; border-right: 1px solid #333;
+    display: flex; align-items: center;
+  }
+  .top-nav .logo-area img { height: 28px; display: block; }
+  .nav-tab {
+    padding: 14px 22px; cursor: pointer; font-size: 13px; font-weight: 500;
+    color: #aaa; border-bottom: 3px solid transparent; transition: color .15s;
+    background: none; border-top: none; border-left: none; border-right: none;
+    font-family: inherit; white-space: nowrap;
+  }
+  .nav-tab:hover { color: #fff; }
+  .nav-tab.active { color: #fff; border-bottom-color: #fff; }
+
+  /* ── Pages ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── Invoice generator styles (verbatim from original) ── */
+  #page-invoice { padding: 2rem 1rem; }
+  #page-invoice .container { max-width: 600px; margin: 0 auto; }
+  #page-invoice .card { background: #fff; border: 1px solid #e5e5e3; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+  #page-invoice .section-title { font-size: 11px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+  #page-invoice .field { margin-bottom: 10px; }
+  #page-invoice label { font-size: 12px; color: #666; display: block; margin-bottom: 4px; }
+  #page-invoice input, #page-invoice textarea, #page-invoice select { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 7px; font-size: 13px; font-family: inherit; background: #fff; color: #1a1a18; }
+  #page-invoice input[type="number"] { -moz-appearance: textfield; }
+  #page-invoice input[type="number"]::-webkit-inner-spin-button { opacity: 1; }
+  #page-invoice textarea { resize: vertical; min-height: 60px; }
+  #page-invoice input:focus, #page-invoice textarea:focus { outline: 2px solid #378add; outline-offset: 1px; }
+  #page-invoice input[readonly] { background: #f9f9f8; color: #555; }
+  #page-invoice .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  #page-invoice .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  #page-invoice button.primary { width: 100%; padding: 11px; font-size: 14px; font-family: inherit; border: none; border-radius: 8px; background: #1a1a18; color: white; cursor: pointer; }
+  #page-invoice button.primary:hover { background: #333; }
+  #page-invoice button.primary:disabled { opacity: 0.5; cursor: default; }
+  #page-invoice button.secondary { width: 100%; padding: 10px; font-size: 13px; font-family: inherit; border: 1px solid #ccc; border-radius: 8px; background: #fff; color: #1a1a18; cursor: pointer; }
+  #page-invoice button.secondary:hover { background: #f5f5f4; }
+  #page-invoice .status { margin-top: 10px; font-size: 13px; padding: 10px 12px; border-radius: 8px; display: none; }
+  #page-invoice .success { background: #eaf3de; color: #3b6d11; display: block; }
+  #page-invoice .error   { background: #fcebeb; color: #a32d2d; display: block; }
+  #page-invoice .loading { background: #e6f1fb; color: #185fa5; display: block; }
+  #page-invoice .toggle { font-size: 12px; color: #888; cursor: pointer; text-decoration: underline; background: none; border: none; padding: 0; margin-top: 4px; width: auto; }
+  #page-invoice .item-block { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f0f0ee; }
+  #page-invoice .item-block:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  #page-invoice .item-label { font-size: 11px; font-weight: 500; color: #666; margin-bottom: 6px; }
+  #page-invoice .checkbox-row { display: flex; align-items: center; gap: 6px; }
+  #page-invoice .checkbox-row input[type="checkbox"] { width: auto; margin: 0; }
+  #page-invoice .checkbox-row label { font-size: 12px; color: #666; margin: 0; white-space: nowrap; }
+  #page-invoice .subtotal-display { background: #f9f9f8; border-radius: 8px; padding: 10px 12px; font-size: 13px; display: flex; justify-content: space-between; margin-top: 8px; }
+  #page-invoice .subtotal-display span:first-child { color: #888; }
+  #page-invoice .subtotal-display span:last-child { font-weight: 500; }
+  #page-invoice .paste-area { min-height: 100px; font-size: 12px; font-family: monospace; }
+  #page-invoice .parse-info { font-size: 11px; color: #3b6d11; margin-top: 6px; display: none; }
+
+  /* ── PO generator styles ── */
+  #page-po .po-topbar {
+    background: #1a1a18; color: white; padding: 12px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  #page-po .po-topbar-actions { display: flex; gap: 8px; }
+  #page-po .btn { padding: 9px 18px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; font-family: inherit; transition: background .15s; }
+  #page-po .btn-primary { background: white; color: #1a1a18; }
+  #page-po .btn-primary:hover { background: #e5e5e3; }
+  #page-po .btn-primary:disabled { opacity: .5; cursor: default; }
+  #page-po .btn-secondary { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); }
+  #page-po .btn-secondary:hover { background: rgba(255,255,255,0.25); }
+  #page-po .btn-red { background: white; color: #a32d2d; border: 1px solid #ddd; font-size: 12px; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-family: inherit; }
+  #page-po .btn-red:hover { background: #fcebeb; }
+  #page-po .btn-add { background: none; border: none; color: #999; font-size: 12px; padding: 4px 0; cursor: pointer; font-family: inherit; text-decoration: underline; }
+  #page-po .btn-add:hover { color: #1a1a18; }
+  #page-po .btn-remove { background: none; border: none; color: #ccc; cursor: pointer; font-size: 16px; line-height: 1; padding: 0 4px; }
+  #page-po .btn-remove:hover { color: #a32d2d; }
+
+  #page-po .po-tabs-row { background: #fff; border-bottom: 1px solid #e5e5e3; padding: 0 24px; display: flex; align-items: center; overflow-x: auto; }
+  #page-po .po-tab { padding: 11px 18px; cursor: pointer; border-bottom: 2px solid transparent; font-size: 13px; font-weight: 400; color: #999; white-space: nowrap; margin-bottom: -1px; }
+  #page-po .po-tab.active { border-bottom-color: #1a1a18; color: #1a1a18; font-weight: 500; }
+  #page-po .po-tab:hover:not(.active) { color: #555; }
+  #page-po .po-tab-add-btn { padding: 8px 14px; cursor: pointer; color: #bbb; font-size: 20px; line-height: 1; background: none; border: none; }
+  #page-po .po-tab-add-btn:hover { color: #1a1a18; }
+
+  #page-po .form-area { padding: 24px; max-width: 1100px; margin: 0 auto; }
+  #page-po .colorway-panel { display: none; }
+  #page-po .colorway-panel.active { display: block; }
+  #page-po .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  #page-po .panel-header h2 { font-size: 13px; font-weight: 500; color: #999; }
+  #page-po .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  #page-po .form-section { background: #fff; border-radius: 12px; border: 1px solid #e5e5e3; padding: 16px; margin-bottom: 16px; }
+  #page-po .form-section h3 { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: #555; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0ee; }
+  #page-po .field-row { margin-bottom: 10px; }
+  #page-po .field-row label { display: block; font-size: 12px; color: #444; margin-bottom: 4px; }
+  #page-po .field-row input[type=text],
+  #page-po .field-row input[type=number],
+  #page-po .field-row textarea { width: 100%; border: 1px solid #ddd; border-radius: 7px; padding: 8px 10px; font-size: 13px; font-family: inherit; background: #fff; color: #1a1a18; }
+  #page-po .field-row input[type=text]:focus,
+  #page-po .field-row input[type=number]:focus,
+  #page-po .field-row textarea:focus { outline: 2px solid #378add; outline-offset: 1px; border-color: transparent; }
+  #page-po .field-row input[readonly] { background: #f9f9f8; color: #555; }
+  #page-po .field-row.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  #page-po .sizes-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+  #page-po .size-field label { display: block; font-size: 12px; color: #444; margin-bottom: 4px; }
+  #page-po .size-field input { width: 100%; border: 1px solid #ddd; border-radius: 7px; padding: 7px 6px; font-size: 13px; font-family: inherit; text-align: center; }
+  #page-po .size-field input:focus { outline: 2px solid #378add; outline-offset: 1px; border-color: transparent; }
+  #page-po .color-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  #page-po .color-row input { flex: 1; border: 1px solid #ddd; border-radius: 7px; padding: 7px 10px; font-size: 13px; font-family: inherit; }
+  #page-po .color-row input.hex-input { max-width: 110px; }
+  #page-po .color-row input:focus { outline: 2px solid #378add; outline-offset: 1px; border-color: transparent; }
+  #page-po .emb-file-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  #page-po .emb-file-row input { flex: 1; border: 1px solid #ddd; border-radius: 7px; padding: 7px 10px; font-size: 13px; font-family: inherit; }
+  #page-po .emb-file-row input:focus { outline: 2px solid #378add; outline-offset: 1px; border-color: transparent; }
+  #page-po .mockup-preview { margin-top: 8px; }
+  #page-po .mockup-preview img { max-height: 120px; border: 1px solid #e5e5e3; border-radius: 7px; display: none; }
+  #page-po .static-editable { background: #f9f9f8; border: 1px solid #e5e5e3; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; }
+  #page-po .static-editable h4 { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: #555; margin-bottom: 6px; }
+  #page-po .static-editable .static-content { font-size: 12px; color: #444; line-height: 1.7; }
+  #page-po .static-editable .static-content a { color: #378add; }
+  #page-po .static-editable .edit-bar { margin-top: 8px; display: flex; justify-content: flex-end; }
+  #page-po .btn-edit { background: none; border: 1px solid #ddd; border-radius: 6px; color: #888; font-size: 11px; padding: 3px 10px; cursor: pointer; font-family: inherit; }
+  #page-po .btn-edit:hover { background: #f0f0ee; color: #1a1a18; }
+  #page-po .static-edit-form { display: none; margin-top: 10px; border-top: 1px solid #e5e5e3; padding-top: 10px; }
+  #page-po .static-edit-form.open { display: block; }
+  #page-po .static-edit-form input[type=text] { width: 100%; border: 1px solid #ddd; border-radius: 7px; padding: 7px 10px; font-size: 12px; font-family: inherit; margin-bottom: 6px; }
+  #page-po .static-edit-form input[type=text]:focus { outline: 2px solid #378add; outline-offset: 1px; border-color: transparent; }
+  #page-po .static-edit-form label { font-size: 12px; color: #666; display: block; margin-bottom: 3px; }
+  #page-po .btn-save-edit { background: #1a1a18; color: white; border: none; border-radius: 7px; font-size: 12px; padding: 6px 14px; cursor: pointer; font-family: inherit; margin-right: 6px; }
+  #page-po .btn-save-edit:hover { background: #333; }
+  #page-po .btn-cancel-edit { background: none; border: 1px solid #ddd; border-radius: 7px; color: #666; font-size: 12px; padding: 6px 12px; cursor: pointer; font-family: inherit; }
+  #page-po .btn-cancel-edit:hover { background: #f5f5f4; }
+  #page-po .fully-static { background: #f9f9f8; border: 1px solid #e5e5e3; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 12px; color: #777; line-height: 1.7; }
+  #page-po .fully-static h4 { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: #555; margin-bottom: 5px; }
+
+  /* PDF hidden container */
+  #pdf-pages-container { position: absolute; left: -9999px; top: 0; }
+
+  /* PDF styles */
+  .pdf-page { width: 1100px; background: white; font-family: Arial, sans-serif; font-size: 12px; color: #222; padding: 32px 40px 24px 40px; }
+  .pdf-title { text-align: center; font-size: 22px; font-weight: bold; color: #222; margin-bottom: 4px; }
+  .pdf-title .g { color: #2e7d32; }
+  .pdf-subtitle { text-align: center; font-size: 14px; color: #2e7d32; margin-bottom: 10px; }
+  .pdf-divider { border: none; border-top: 1px solid #aaa; margin-bottom: 16px; }
+  .pdf-body { display: flex; gap: 30px; }
+  .pdf-left { flex: 0 0 340px; }
+  .pdf-right { flex: 1; }
+  .pdf-field { margin-bottom: 5px; line-height: 1.5; }
+  .pdf-field b { font-weight: bold; }
+  .pdf-field .g { color: #2e7d32; }
+  .pdf-field a { color: #2e7d32; text-decoration: underline; }
+  .pdf-section-title { text-align: center; font-weight: bold; font-size: 13px; margin: 12px 0 6px 0; }
+  .pdf-sizes .size-line { margin-bottom: 2px; }
+  .pdf-mat-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
+  .pdf-mat-row .mat-text { flex: 1; line-height: 1.6; }
+  .pdf-label-img { width: 80px; height: 54px; object-fit: cover; border: 1px solid #ddd; flex-shrink: 0; }
+  .pdf-footer { border-top: 1px solid #aaa; text-align: center; font-size: 11px; color: #444; padding-top: 8px; margin-top: 16px; }
+  .pdf-billing { margin-top: 12px; }
+  .pdf-billing .billing-title { font-weight: bold; text-align: center; margin-bottom: 4px; }
+  .pdf-billing p { line-height: 1.6; }
+  .pdf-mockup-img { max-width: 200px; max-height: 200px; margin-top: 6px; display: block; }
 </style>
 </head>
 <body>
+
+<!-- ── TOP NAV ── -->
+<nav class="top-nav">
+  <div class="logo-area">
+    <img src="Mayor_Logo_transparent.png" alt="Mayor">
+  </div>
+  <button class="nav-tab active" id="nav-invoice" onclick="switchPage('invoice')">Invoice Generator</button>
+  <button class="nav-tab" id="nav-po" onclick="switchPage('po')">PO Generator</button>
+</nav>
+
+<!-- ══════════════════════════════════════════════
+     PAGE 1 — INVOICE GENERATOR (untouched)
+═══════════════════════════════════════════════ -->
+<div class="page active" id="page-invoice">
 <div class="container">
-  <img src="Mayor_Logo_transparent.png" style="width:120px; margin-bottom:1.5rem; display:block;" />
 
   <!-- PASTE FROM HUBSPOT -->
   <div class="card">
@@ -140,11 +287,43 @@
   <button class="primary" id="gen-btn" onclick="generate()">Generate Order Confirmation PDF</button>
   <div class="status" id="status"></div>
 </div>
+</div><!-- end #page-invoice -->
+
+
+<!-- ══════════════════════════════════════════════
+     PAGE 2 — PO GENERATOR
+═══════════════════════════════════════════════ -->
+<div class="page" id="page-po">
+  <div class="po-topbar">
+    <span style="font-size:14px;font-weight:600;">PO Generator</span>
+    <div class="po-topbar-actions">
+      <button class="btn btn-secondary" onclick="po_addColorway()">+ Add Colorway</button>
+      <button class="btn btn-primary" id="po-download-btn" onclick="po_generateAllPDFs()">⬇ Download PDF</button>
+    </div>
+  </div>
+  <div class="po-tabs-row" id="po-tabs-row"></div>
+  <div class="form-area" id="po-form-area"></div>
+  <div id="pdf-pages-container"></div>
+</div><!-- end #page-po -->
+
 
 <script>
+// ══════════════════════════════════════════════
+// PAGE SWITCHING
+// ══════════════════════════════════════════════
+function switchPage(page) {
+  document.getElementById('page-invoice').classList.toggle('active', page === 'invoice');
+  document.getElementById('page-po').classList.toggle('active', page === 'po');
+  document.getElementById('nav-invoice').classList.toggle('active', page === 'invoice');
+  document.getElementById('nav-po').classList.toggle('active', page === 'po');
+}
+
+
+// ══════════════════════════════════════════════
+// INVOICE GENERATOR (verbatim, untouched)
+// ══════════════════════════════════════════════
 let itemCount = 0;
 
-// ── HUBSPOT PARSER ──
 function parseHubspot() {
   const raw = document.getElementById('hubspot-paste').value;
   if (!raw.trim()) return;
@@ -153,23 +332,18 @@ function parseHubspot() {
   const data = {};
 
   for (let i = 0; i < lines.length; i++) {
-    // Match "Details" or "* Details"
     const stripped = lines[i].replace(/^\*\s*/, '').trim();
     if (stripped.toLowerCase() === 'details' && i + 1 < lines.length) {
-      // Find label above (skip blank lines)
       let labelIdx = i - 1;
       while (labelIdx >= 0 && lines[labelIdx] === '') labelIdx--;
       if (labelIdx >= 0) {
         const label = lines[labelIdx].replace(/^\*\s*/, '').trim();
-        // Get value — if next line is blank, try the line after
         let value = lines[i + 1] ? lines[i + 1].trim() : '';
         if (!value && i + 2 < lines.length) value = lines[i + 2].trim();
         data[label] = value;
       }
     }
   }
-
-  console.log('Parsed fields:', data);
 
   function get(prefix) {
     for (const key of Object.keys(data)) {
@@ -188,12 +362,11 @@ function parseHubspot() {
   if (club)     document.getElementById('club').value = club;
 
   if (address && address !== '--') {
-    // Split smashed HubSpot address into lines
     let addrFormatted = address
-      .replace(/([a-z])([A-Z])/g, '$1\n$2')          // camelCase joins e.g. ShopHawks
-      .replace(/([a-zA-Z])(\d{3,})/g, '$1\n$2')     // letter before street number
-      .replace(/(\d{5})\s*\(/g, '$1\n(')           // zip then phone
-      .replace(/\s+([a-zA-Z0-9._%+\-]+@)/g, '\n$1') // emails
+      .replace(/([a-z])([A-Z])/g, '$1\n$2')
+      .replace(/([a-zA-Z])(\d{3,})/g, '$1\n$2')
+      .replace(/(\d{5})\s*\(/g, '$1\n(')
+      .replace(/\s+([a-zA-Z0-9._%+\-]+@)/g, '\n$1')
       .replace(/\n+/g, '\n').trim();
     document.getElementById('address').value = addrFormatted;
   }
@@ -231,7 +404,6 @@ function parseHubspot() {
     if (av > 0) document.getElementById('art_setup').value = av;
   }
 
-  // Count items: any with qty>0 OR a real description
   let numItems = 0;
   for (let i = 0; i < 5; i++) {
     if (qtys[i] > 0 || (descs[i] && descs[i] !== '--')) numItems = i + 1;
@@ -247,13 +419,11 @@ function parseHubspot() {
     if (descs[i]  && descs[i]  !== '--') document.getElementById('desc_'  + n).value = descs[i].replace(/ \/ /g, '\n');
     if (sizes[i]  && sizes[i]  !== '--') document.getElementById('sizes_' + n).value = sizes[i];
     if (qtys[i] > 0)   document.getElementById('qty_' + n).value = qtys[i];
-    // If price is $0 and same URL as a previous item, use that item's price as orig_price
     if (prices[i] === 0 && qtys[i] > 0) {
       let matchPrice = 0;
       for (let j = 0; j < i; j++) {
         if (urls[j] && urls[i] && urls[j] === urls[i] && urls[j] !== '--' && prices[j] > 0) {
-          matchPrice = prices[j];
-          break;
+          matchPrice = prices[j]; break;
         }
       }
       if (matchPrice > 0) {
@@ -272,7 +442,6 @@ function parseHubspot() {
   info.textContent = '✓ Filled ' + numItems + ' item' + (numItems > 1 ? 's' : '') + ' — review and adjust as needed';
 }
 
-// ── ITEM MANAGEMENT ──
 function addItem() {
   itemCount++;
   const n = itemCount;
@@ -374,14 +543,14 @@ async function generate() {
     customer_email: val('customer_email'),
     product_page:   val('product_page'),
     payment_link:   val('payment_link'),
-    line_items:   lineItems,
-    subtotal:     num('subtotal'),
-    embroidery:   num('embroidery') || null,
+    line_items:     lineItems,
+    subtotal:       num('subtotal'),
+    embroidery:     num('embroidery') || null,
     strike_embroidery: checked('strike_embroidery'),
-    art_setup:    num('art_setup') || null,
-    strike_art:   checked('strike_art'),
-    shipping:     num('shipping'),
-    total:        num('total')
+    art_setup:      num('art_setup') || null,
+    strike_art:     checked('strike_art'),
+    shipping:       num('shipping'),
+    total:          num('total')
   };
 
   try {
@@ -409,6 +578,520 @@ async function generate() {
 
 // Start with 1 item
 addItem();
+
+
+// ══════════════════════════════════════════════
+// PO GENERATOR (all functions prefixed po_)
+// ══════════════════════════════════════════════
+const PO_PATTERN_LINK      = 'https://drive.google.com/your-pattern-link';
+const PO_LABEL_FILE_LINK   = 'https://drive.google.com/your-label-link';
+const PO_HANGTAG_FILE_LINK = 'https://drive.google.com/your-hangtag-link';
+const PO_LABEL_IMG_URL     = 'https://i.imgur.com/placeholder-label.jpg';
+const PO_CARE_IMG_URL      = 'https://i.imgur.com/placeholder-care.jpg';
+const PO_HANGTAG_IMG_URL   = 'https://i.imgur.com/placeholder-hangtag.jpg';
+
+const PO_SIZES = ['XS','S','M','L','XL','XXL','3XL'];
+
+let po_colorways = [];
+let po_activeIdx = 0;
+let po_cwCounter = 0;
+
+const po_staticDefaults = {
+  buttons: 'UNBRANDED clear pearl buttons (do not use Fenix-branded buttons)',
+  addressLine1: 'Matt Bartini', addressLine2: 'Mayor Clothing',
+  addressLine3: '870 Inman Village Parkway NE', addressLine4: 'Unit 533',
+  addressLine5: 'Atlanta, GA 30307', addressLine6: 'USA',
+  labelSize: '1.5 centimeters high by 6 centimeters wide',
+  labelPlacement: 'Centered on the back neck of the polo collar & sewn on the left and right edge',
+  hangtagSize: '10 centimeters high by 4 centimeters wide',
+  fusingColor: 'white - hex # ffffff',
+  embplacement: 'Left chest standard position – same as second sample polo',
+};
+const po_cwStatic = {};
+function po_getStatic(id, key) { return (po_cwStatic[id] && po_cwStatic[id][key] !== undefined) ? po_cwStatic[id][key] : po_staticDefaults[key]; }
+function po_setStatic(id, key, v) { if (!po_cwStatic[id]) po_cwStatic[id] = {}; po_cwStatic[id][key] = v; }
+
+function po_addColorway() {
+  po_cwCounter++;
+  const id = po_cwCounter;
+  po_colorways.push({ id });
+  po_activeIdx = po_colorways.length - 1;
+  po_renderTabs();
+  po_renderPanels();
+}
+function po_removeColorway(idx) {
+  if (po_colorways.length === 1) { alert('At least one colorway is required.'); return; }
+  po_colorways.splice(idx, 1);
+  if (po_activeIdx >= po_colorways.length) po_activeIdx = po_colorways.length - 1;
+  po_renderTabs(); po_renderPanels();
+}
+function po_setActive(idx) {
+  po_activeIdx = idx;
+  po_renderTabs();
+  document.querySelectorAll('#po-form-area .colorway-panel').forEach((p,i) => p.classList.toggle('active', i === idx));
+}
+
+function po_renderTabs() {
+  const row = document.getElementById('po-tabs-row');
+  row.innerHTML = '';
+  po_colorways.forEach((cw, i) => {
+    const inp = document.getElementById(`cw-${cw.id}-colorname`);
+    const label = inp ? (inp.value || `Colorway ${i+1}`) : `Colorway ${i+1}`;
+    const tab = document.createElement('div');
+    tab.className = 'po-tab' + (i === po_activeIdx ? ' active' : '');
+    tab.textContent = label;
+    tab.onclick = () => po_setActive(i);
+    row.appendChild(tab);
+  });
+  const addBtn = document.createElement('button');
+  addBtn.className = 'po-tab-add-btn';
+  addBtn.textContent = '+';
+  addBtn.onclick = po_addColorway;
+  row.appendChild(addBtn);
+}
+
+function po_renderPanels() {
+  const area = document.getElementById('po-form-area');
+  area.innerHTML = '';
+  po_colorways.forEach((cw, i) => {
+    const div = document.createElement('div');
+    div.className = 'colorway-panel' + (i === po_activeIdx ? ' active' : '');
+    div.id = `panel-${cw.id}`;
+    div.innerHTML = po_buildPanelHTML(cw.id, i);
+    area.appendChild(div);
+  });
+  po_colorways.forEach(cw => po_initPanel(cw.id));
+  po_colorways.forEach(cw => {
+    const inp = document.getElementById(`cw-${cw.id}-colorname`);
+    if (inp) inp.addEventListener('input', po_renderTabs);
+  });
+  po_colorways.forEach(cw => po_wireColorSync(cw.id));
+}
+
+function po_buildPanelHTML(id, idx) {
+  const sizeInputs = PO_SIZES.map(s => `
+    <div class="size-field">
+      <label>${s}</label>
+      <input type="number" id="cw-${id}-size-${s}" placeholder="0" min="0" step="1" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:7px 6px;font-size:13px;font-family:inherit;text-align:center;">
+    </div>`).join('');
+
+  return `
+  <div class="panel-header">
+    <h2>Colorway ${idx+1}</h2>
+    ${po_colorways.length > 1 ? `<button class="btn btn-red" onclick="po_removeColorway(${idx})">Remove Colorway</button>` : ''}
+  </div>
+  <div class="form-grid">
+    <div>
+      <div class="form-section">
+        <h3>PO Header</h3>
+        <div class="field-row"><label>PO Number</label><input type="text" id="cw-${id}-po" placeholder=""></div>
+        <div class="field-row"><label>Club Name</label><input type="text" id="cw-${id}-club" placeholder=""></div>
+        <div class="field-row"><label>Color Description (subtitle)</label><input type="text" id="cw-${id}-colorname" placeholder=""></div>
+        <div class="field-row two-col">
+          <div><label>Date Label</label><input type="text" id="cw-${id}-datelabel" value="Ship By"></div>
+          <div><label>Date</label><input type="text" id="cw-${id}-datevalue" placeholder=""></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <h3>Print</h3>
+        <div class="static-editable" id="cw-${id}-pattern-block" style="margin-bottom:12px;padding:8px 12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <div>
+              <span style="font-size:11px;font-weight:700;color:#555;margin-right:8px;">Pattern</span>
+              <span class="static-content" id="cw-${id}-pattern-display" style="font-size:12px;color:#444;">Mayor Polo</span>
+            </div>
+            <button class="btn-edit" onclick="po_toggleStaticEdit('${id}','pattern')">✎ Edit</button>
+          </div>
+          <div class="static-edit-form" id="cw-${id}-pattern-form">
+            <label>Pattern Label</label><input type="text" id="cw-${id}-patternlabel" value="Mayor Polo">
+            <label>Pattern Link</label><input type="text" id="cw-${id}-patternlink" value="${PO_PATTERN_LINK}">
+            <div style="margin-top:6px;">
+              <button class="btn-save-edit" onclick="po_saveStaticEdit('${id}','pattern')">Save</button>
+              <button class="btn-cancel-edit" onclick="po_cancelStaticEdit('${id}','pattern')">Cancel</button>
+            </div>
+          </div>
+        </div>
+        <div class="field-row two-col">
+          <div><label>Print Name</label><input type="text" id="cw-${id}-printname" placeholder=""></div>
+          <div><label>Print Link</label><input type="text" id="cw-${id}-printlink" placeholder=""></div>
+        </div>
+        <div class="field-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <div><label>Repeat Size — Height</label>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <input type="number" id="cw-${id}-repeatsizeh" placeholder="" step="any" min="0" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;">
+              <span style="font-size:12px;color:#666;white-space:nowrap;">in</span>
+            </div>
+          </div>
+          <div><label>Repeat Size — Width</label>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <input type="number" id="cw-${id}-repeatsizew" placeholder="" step="any" min="0" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;">
+              <span style="font-size:12px;color:#666;white-space:nowrap;">in</span>
+            </div>
+          </div>
+          <div><label>Stroke Thickness</label>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <input type="number" id="cw-${id}-stroke" placeholder="" step="any" min="0" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;">
+              <span style="font-size:12px;color:#666;white-space:nowrap;">in</span>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <label>Print Color(s) — logo on background</label>
+          <div id="cw-${id}-printcolors"></div>
+          <button class="btn-add" onclick="po_addPrintColor(${id})">+ Add Color</button>
+        </div>
+        <div class="field-row" style="margin-top:8px;">
+          <label>Background / Polo Color <span style="color:#aaa;font-weight:400;">(polo thread auto-syncs)</span></label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="cw-${id}-bgcolorname" placeholder="Color name" style="flex:1;border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;" oninput="po_syncPoloThread(${id})">
+            <input type="text" id="cw-${id}-bgcolorhex" placeholder="hex #" style="max-width:130px;border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;" oninput="po_syncPoloThread(${id})">
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <h3>Embroidery</h3>
+        <div class="field-row"><label>Embroidery File Description</label><input type="text" id="cw-${id}-embdesc" placeholder=""></div>
+        <div class="field-row">
+          <label>Files</label>
+          <div id="cw-${id}-embfiles"></div>
+          <button class="btn-add" onclick="po_addEmbFile(${id})">+ Add File</button>
+        </div>
+        <div class="field-row">
+          <label>Thread Color(s)</label>
+          <div id="cw-${id}-threadcolors"></div>
+          <button class="btn-add" onclick="po_addThreadColor(${id})">+ Add Thread Color</button>
+        </div>
+        <div class="static-editable" id="cw-${id}-embplacement-block">
+          <h4>Placement</h4>
+          <div class="static-content" id="cw-${id}-embplacement-display">${po_getStatic(id,'embplacement')}</div>
+          <div class="edit-bar"><button class="btn-edit" onclick="po_toggleStaticEdit('${id}','embplacement')">✎ Edit</button></div>
+          <div class="static-edit-form" id="cw-${id}-embplacement-form">
+            <label>Placement Text</label>
+            <input type="text" id="cw-${id}-embplacement-input" value="${po_getStatic(id,'embplacement')}">
+            <div style="margin-top:6px;">
+              <button class="btn-save-edit" onclick="po_saveStaticEdit('${id}','embplacement')">Save</button>
+              <button class="btn-cancel-edit" onclick="po_cancelStaticEdit('${id}','embplacement')">Cancel</button>
+            </div>
+          </div>
+        </div>
+        <div class="field-row" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div><label>Embroidery Size H</label>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <input type="number" id="cw-${id}-embsizeh" placeholder="" step="any" min="0" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;">
+              <span style="font-size:12px;color:#666;white-space:nowrap;">in</span>
+            </div>
+          </div>
+          <div><label>Embroidery Size W</label>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <input type="number" id="cw-${id}-embsizew" placeholder="" step="any" min="0" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;">
+              <span style="font-size:12px;color:#666;white-space:nowrap;">in</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="form-section">
+        <h3>Quantity &amp; Sizes</h3>
+        <div class="field-row"><label>Total Quantity <span style="color:#aaa;font-weight:400;">(auto-calculated)</span></label>
+          <input type="text" id="cw-${id}-qty" readonly style="background:#f9f9f8;font-weight:600;border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;width:100%;" placeholder="Fill in sizes below">
+        </div>
+        <div class="sizes-grid">${sizeInputs}</div>
+      </div>
+      <div class="form-section">
+        <h3>Mockup</h3>
+        <div class="field-row"><label>Mockup Image URL</label>
+          <input type="text" id="cw-${id}-mockupurl" placeholder="" style="border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;width:100%;" oninput="po_previewMockup(${id})">
+        </div>
+        <div class="mockup-preview"><img id="cw-${id}-mockuppreview" src="" alt="Mockup preview"></div>
+      </div>
+      <div class="form-section">
+        <h3>Materials</h3>
+        <div class="field-row"><label>Thread Color <span style="color:#aaa;font-weight:400;">(auto-synced to background)</span></label>
+          <input type="text" id="cw-${id}-polothreadcolor" placeholder="" readonly style="background:#f9f9f8;border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;width:100%;">
+        </div>
+        <div class="static-editable" id="cw-${id}-fusing-block">
+          <h4>Fusing</h4>
+          <div class="static-content" id="cw-${id}-fusing-display">Same color (${po_getStatic(id,'fusingColor')}) and thickness as second sample polo</div>
+          <div class="edit-bar"><button class="btn-edit" onclick="po_toggleStaticEdit('${id}','fusing')">✎ Edit</button></div>
+          <div class="static-edit-form" id="cw-${id}-fusing-form">
+            <label>Fusing Color &amp; Hex</label><input type="text" id="cw-${id}-fusing-input" value="${po_getStatic(id,'fusingColor')}">
+            <div style="margin-top:6px;"><button class="btn-save-edit" onclick="po_saveStaticEdit('${id}','fusing')">Save</button><button class="btn-cancel-edit" onclick="po_cancelStaticEdit('${id}','fusing')">Cancel</button></div>
+          </div>
+        </div>
+        <div class="static-editable" id="cw-${id}-buttons-block">
+          <h4>Buttons</h4>
+          <div class="static-content" id="cw-${id}-buttons-display">${po_getStatic(id,'buttons')}</div>
+          <div class="edit-bar"><button class="btn-edit" onclick="po_toggleStaticEdit('${id}','buttons')">✎ Edit</button></div>
+          <div class="static-edit-form" id="cw-${id}-buttons-form">
+            <label>Button Description</label><input type="text" id="cw-${id}-buttons-input" value="${po_getStatic(id,'buttons')}">
+            <div style="margin-top:6px;"><button class="btn-save-edit" onclick="po_saveStaticEdit('${id}','buttons')">Save</button><button class="btn-cancel-edit" onclick="po_cancelStaticEdit('${id}','buttons')">Cancel</button></div>
+          </div>
+        </div>
+        <div class="static-editable" id="cw-${id}-mainlabel-block">
+          <h4>Main Label</h4>
+          <div class="static-content" id="cw-${id}-mainlabel-display">Woven<br>Label File: <a href="${PO_LABEL_FILE_LINK}" target="_blank">Link</a><br>Size: ${po_getStatic(id,'labelSize')}<br>Placement: ${po_getStatic(id,'labelPlacement')}</div>
+          <div class="edit-bar"><button class="btn-edit" onclick="po_toggleStaticEdit('${id}','mainlabel')">✎ Edit</button></div>
+          <div class="static-edit-form" id="cw-${id}-mainlabel-form">
+            <label>Label File Link</label><input type="text" id="cw-${id}-labellink" value="${PO_LABEL_FILE_LINK}">
+            <label>Label Size</label><input type="text" id="cw-${id}-labelsize" value="${po_getStatic(id,'labelSize')}">
+            <label>Label Placement</label><input type="text" id="cw-${id}-labelplacement" value="${po_getStatic(id,'labelPlacement')}">
+            <div style="margin-top:6px;"><button class="btn-save-edit" onclick="po_saveStaticEdit('${id}','mainlabel')">Save</button><button class="btn-cancel-edit" onclick="po_cancelStaticEdit('${id}','mainlabel')">Cancel</button></div>
+          </div>
+        </div>
+        <div class="fully-static"><h4>Care Label</h4>Printed label sewn on the inside bottom left seam of the polo with 1 extra UNBRANDED button – same as second sample polo</div>
+        <div class="static-editable" id="cw-${id}-hangtag-block">
+          <h4>Hang Tag</h4>
+          <div class="static-content" id="cw-${id}-hangtag-display">Hang Tag File: <a href="${PO_HANGTAG_FILE_LINK}" target="_blank">Link</a> (do not use Fenix-branded hang tags)<br>Size: ${po_getStatic(id,'hangtagSize')}</div>
+          <div class="edit-bar"><button class="btn-edit" onclick="po_toggleStaticEdit('${id}','hangtag')">✎ Edit</button></div>
+          <div class="static-edit-form" id="cw-${id}-hangtag-form">
+            <label>Hang Tag File Link</label><input type="text" id="cw-${id}-hangtaglink" value="${PO_HANGTAG_FILE_LINK}">
+            <label>Hang Tag Size</label><input type="text" id="cw-${id}-hangtagsize" value="${po_getStatic(id,'hangtagSize')}">
+            <div style="margin-top:6px;"><button class="btn-save-edit" onclick="po_saveStaticEdit('${id}','hangtag')">Save</button><button class="btn-cancel-edit" onclick="po_cancelStaticEdit('${id}','hangtag')">Cancel</button></div>
+          </div>
+        </div>
+        <div class="fully-static"><h4>Packaging</h4>Same as second sample polo, except use UNBRANDED plain poly bag (do not use Fenix-branded packaging). Also, please tape the boxes with UNBRANDED tape (do not use Fenix-branded tape).</div>
+        <div class="static-editable" id="cw-${id}-address-block">
+          <h4>Billing / Delivery Address</h4>
+          <div class="static-content" id="cw-${id}-address-display">${[po_getStatic(id,'addressLine1'),po_getStatic(id,'addressLine2'),po_getStatic(id,'addressLine3'),po_getStatic(id,'addressLine4'),po_getStatic(id,'addressLine5'),po_getStatic(id,'addressLine6')].filter(Boolean).join('<br>')}</div>
+          <div class="edit-bar"><button class="btn-edit" onclick="po_toggleStaticEdit('${id}','address')">✎ Edit</button></div>
+          <div class="static-edit-form" id="cw-${id}-address-form">
+            <label>Line 1 (Name)</label><input type="text" id="cw-${id}-addr1" value="${po_getStatic(id,'addressLine1')}">
+            <label>Line 2 (Company)</label><input type="text" id="cw-${id}-addr2" value="${po_getStatic(id,'addressLine2')}">
+            <label>Line 3 (Street)</label><input type="text" id="cw-${id}-addr3" value="${po_getStatic(id,'addressLine3')}">
+            <label>Line 4 (Unit)</label><input type="text" id="cw-${id}-addr4" value="${po_getStatic(id,'addressLine4')}">
+            <label>Line 5 (City, State ZIP)</label><input type="text" id="cw-${id}-addr5" value="${po_getStatic(id,'addressLine5')}">
+            <label>Line 6 (Country)</label><input type="text" id="cw-${id}-addr6" value="${po_getStatic(id,'addressLine6')}">
+            <div style="margin-top:6px;"><button class="btn-save-edit" onclick="po_saveStaticEdit('${id}','address')">Save</button><button class="btn-cancel-edit" onclick="po_cancelStaticEdit('${id}','address')">Cancel</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function po_toggleStaticEdit(id, key) { document.getElementById(`cw-${id}-${key}-form`).classList.toggle('open'); }
+function po_cancelStaticEdit(id, key) { document.getElementById(`cw-${id}-${key}-form`).classList.remove('open'); }
+function po_saveStaticEdit(id, key) {
+  const v = (fid) => { const el = document.getElementById(fid); return el ? el.value.trim() : ''; };
+  if (key === 'pattern') {
+    document.getElementById(`cw-${id}-pattern-display`).textContent = v(`cw-${id}-patternlabel`) || 'Mayor Polo';
+  } else if (key === 'fusing') {
+    const val = v(`cw-${id}-fusing-input`);
+    po_setStatic(id, 'fusingColor', val);
+    document.getElementById(`cw-${id}-fusing-display`).textContent = `Same color (${val}) and thickness as second sample polo`;
+  } else if (key === 'buttons') {
+    const val = v(`cw-${id}-buttons-input`);
+    po_setStatic(id, 'buttons', val);
+    document.getElementById(`cw-${id}-buttons-display`).textContent = val;
+  } else if (key === 'mainlabel') {
+    const link = v(`cw-${id}-labellink`), size = v(`cw-${id}-labelsize`), placement = v(`cw-${id}-labelplacement`);
+    po_setStatic(id, 'labelSize', size); po_setStatic(id, 'labelPlacement', placement);
+    document.getElementById(`cw-${id}-mainlabel-display`).innerHTML = `Woven<br>Label File: <a href="${link}" target="_blank">Link</a><br>Size: ${size}<br>Placement: ${placement}`;
+  } else if (key === 'hangtag') {
+    const link = v(`cw-${id}-hangtaglink`), size = v(`cw-${id}-hangtagsize`);
+    po_setStatic(id, 'hangtagSize', size);
+    document.getElementById(`cw-${id}-hangtag-display`).innerHTML = `Hang Tag File: <a href="${link}" target="_blank">Link</a> (do not use Fenix-branded hang tags)<br>Size: ${size}`;
+  } else if (key === 'address') {
+    ['1','2','3','4','5','6'].forEach(n => po_setStatic(id, `addressLine${n}`, v(`cw-${id}-addr${n}`)));
+    document.getElementById(`cw-${id}-address-display`).innerHTML = ['1','2','3','4','5','6'].map(n => po_getStatic(id,`addressLine${n}`)).filter(Boolean).join('<br>');
+  } else if (key === 'embplacement') {
+    const val = v(`cw-${id}-embplacement-input`);
+    po_setStatic(id, 'embplacement', val);
+    document.getElementById(`cw-${id}-embplacement-display`).textContent = val;
+  }
+  document.getElementById(`cw-${id}-${key}-form`).classList.remove('open');
+}
+
+function po_syncPoloThread(id) {
+  const name = (document.getElementById(`cw-${id}-bgcolorname`) || {}).value || '';
+  const hex  = (document.getElementById(`cw-${id}-bgcolorhex`)  || {}).value || '';
+  const isWhite = name.trim().toLowerCase() === 'white';
+  const out = [name, hex ? `(hex # ${hex})` : ''].filter(Boolean).join(' ');
+  const field = document.getElementById(`cw-${id}-polothreadcolor`);
+  if (field) field.value = out ? out + (isWhite ? ' – same as second sample polo' : '') : '';
+}
+function po_wireColorSync(id) {
+  ['bgcolorname','bgcolorhex'].forEach(fid => {
+    const el = document.getElementById(`cw-${id}-${fid}`);
+    if (el) el.addEventListener('input', () => po_syncPoloThread(id));
+  });
+}
+
+function po_addPrintColor(id) {
+  const container = document.getElementById(`cw-${id}-printcolors`);
+  const rowId = Date.now();
+  const row = document.createElement('div');
+  row.className = 'color-row'; row.id = `pc-${rowId}`;
+  row.innerHTML = `<input type="text" placeholder="Color name" style="flex:1;border:1px solid #ddd;border-radius:7px;padding:7px 10px;font-size:13px;font-family:inherit;"><input type="text" class="hex-input" placeholder="hex #" style="max-width:110px;border:1px solid #ddd;border-radius:7px;padding:7px 10px;font-size:13px;font-family:inherit;"><button class="btn-remove" onclick="document.getElementById('pc-${rowId}').remove()">×</button>`;
+  container.appendChild(row);
+}
+
+function po_addEmbFile(id) {
+  const container = document.getElementById(`cw-${id}-embfiles`);
+  const rowId = Date.now();
+  const row = document.createElement('div');
+  row.className = 'emb-file-row'; row.id = `ef-${rowId}`;
+  row.innerHTML = `<input type="text" data-role="url" placeholder="" style="flex:1;border:1px solid #ddd;border-radius:7px;padding:7px 10px;font-size:13px;font-family:inherit;"><button class="btn-remove" onclick="document.getElementById('ef-${rowId}').remove()">×</button>`;
+  container.appendChild(row);
+}
+
+function po_addThreadColor(id) {
+  const container = document.getElementById(`cw-${id}-threadcolors`);
+  const rowId = Date.now();
+  const row = document.createElement('div');
+  row.className = 'color-row'; row.id = `tc-${rowId}`;
+  row.innerHTML = `<input type="text" placeholder="Color name" style="flex:1;border:1px solid #ddd;border-radius:7px;padding:7px 10px;font-size:13px;font-family:inherit;"><input type="text" class="hex-input" placeholder="hex #" style="max-width:110px;border:1px solid #ddd;border-radius:7px;padding:7px 10px;font-size:13px;font-family:inherit;"><button class="btn-remove" onclick="document.getElementById('tc-${rowId}').remove()">×</button>`;
+  container.appendChild(row);
+}
+
+function po_updateQty(id) {
+  let total = 0;
+  PO_SIZES.forEach(s => { const el = document.getElementById(`cw-${id}-size-${s}`); const v = el ? parseInt(el.value, 10) : 0; if (!isNaN(v) && v > 0) total += v; });
+  const qtyEl = document.getElementById(`cw-${id}-qty`);
+  if (qtyEl) qtyEl.value = total > 0 ? `${total} total polos` : '';
+}
+
+function po_initPanel(id) {
+  const embC = document.getElementById(`cw-${id}-embfiles`);
+  if (embC && embC.children.length === 0) po_addEmbFile(id);
+  const tcC = document.getElementById(`cw-${id}-threadcolors`);
+  if (tcC && tcC.children.length === 0) po_addThreadColor(id);
+  const pcC = document.getElementById(`cw-${id}-printcolors`);
+  if (pcC && pcC.children.length === 0) po_addPrintColor(id);
+  PO_SIZES.forEach(s => { const el = document.getElementById(`cw-${id}-size-${s}`); if (el) el.addEventListener('input', () => po_updateQty(id)); });
+}
+
+function po_previewMockup(id) {
+  const url = document.getElementById(`cw-${id}-mockupurl`).value;
+  const img = document.getElementById(`cw-${id}-mockuppreview`);
+  if (url) { img.src = url; img.style.display = 'block'; } else img.style.display = 'none';
+}
+
+function po_collectData(id) {
+  const v = (fid) => { const el = document.getElementById(`cw-${id}-${fid}`); return el ? el.value.trim() : ''; };
+  const sizes = {};
+  PO_SIZES.forEach(s => { const val = v(`size-${s}`); if (val && val !== '0') sizes[s] = val; });
+  const printColors = [];
+  const pcC = document.getElementById(`cw-${id}-printcolors`);
+  if (pcC) pcC.querySelectorAll('.color-row').forEach(row => { const inputs = row.querySelectorAll('input'); const name = inputs[0].value.trim(), hex = inputs[1].value.trim(); if (name || hex) printColors.push({ name, hex }); });
+  const embfiles = [];
+  const efC = document.getElementById(`cw-${id}-embfiles`);
+  if (efC) efC.querySelectorAll('.emb-file-row').forEach(row => { const urlEl = row.querySelector('[data-role="url"]'); const url = urlEl ? urlEl.value.trim() : ''; if (url) embfiles.push({ label: '', url }); });
+  const threadColors = [];
+  const tcC = document.getElementById(`cw-${id}-threadcolors`);
+  if (tcC) tcC.querySelectorAll('.color-row').forEach(row => { const inputs = row.querySelectorAll('input'); const name = inputs[0].value.trim(), hex = inputs[1].value.trim(); if (name || hex) threadColors.push({ name, hex }); });
+  return {
+    po: v('po'), club: v('club'), colorname: v('colorname'),
+    datelabel: v('datelabel'), datevalue: v('datevalue'),
+    patternlabel: v('patternlabel') || 'Mayor Polo', patternlink: v('patternlink') || PO_PATTERN_LINK,
+    printname: v('printname'), printlink: v('printlink'),
+    repeatsizeh: v('repeatsizeh'), repeatsizew: v('repeatsizew'), stroke: v('stroke'),
+    printColors, bgcolorname: v('bgcolorname'), bgcolorhex: v('bgcolorhex'),
+    qty: v('qty'), sizes, mockupurl: v('mockupurl'),
+    embdesc: v('embdesc'), embfiles, threadColors,
+    embplacement: po_getStatic(id,'embplacement'),
+    embsizeh: v('embsizeh'), embsizew: v('embsizew'),
+    polothreadcolor: v('polothreadcolor'),
+    fusingColor: po_getStatic(id,'fusingColor'), buttons: po_getStatic(id,'buttons'),
+    labellink: v('labellink') || PO_LABEL_FILE_LINK,
+    labelsize: v('labelsize') || po_getStatic(id,'labelSize'),
+    labelplacement: v('labelplacement') || po_getStatic(id,'labelPlacement'),
+    hangtaglink: v('hangtaglink') || PO_HANGTAG_FILE_LINK,
+    hangtagsize: v('hangtagsize') || po_getStatic(id,'hangtagSize'),
+    addr1: po_getStatic(id,'addressLine1'), addr2: po_getStatic(id,'addressLine2'),
+    addr3: po_getStatic(id,'addressLine3'), addr4: po_getStatic(id,'addressLine4'),
+    addr5: po_getStatic(id,'addressLine5'), addr6: po_getStatic(id,'addressLine6'),
+  };
+}
+
+function po_buildPDFPage(d) {
+  const g = (t) => `<span class="g">${t}</span>`;
+  const lnk = (url, text) => `<a href="${url}" style="color:#2e7d32;text-decoration:underline;">${text}</a>`;
+  const sizeLines = Object.entries(d.sizes).map(([s,q]) => `<div class="size-line">${s}: ${g(q)}</div>`).join('');
+  const printColorStr = d.printColors.map(c => { let s = g(c.name); if (c.hex) s += ` ${g('(hex # '+c.hex+')')}`; return s; }).join(' and ');
+  const bgStr = [d.bgcolorname, d.bgcolorhex ? `(hex # ${d.bgcolorhex})` : ''].filter(Boolean).join(' ');
+  const colorLine = printColorStr ? printColorStr + (bgStr ? ` on ${g(bgStr)}` : '') : g(bgStr);
+  const embFileLinks = d.embfiles.map(f => lnk(f.url, f.label || f.url)).join(', ');
+  const tcText = d.threadColors.map(tc => { let s = g(tc.name); if (tc.hex) s += ` ${g('(hex # '+tc.hex+')')}`; return s; }).join(', ');
+  const mockupHTML = d.mockupurl ? `<img src="${d.mockupurl}" class="pdf-mockup-img" crossorigin="anonymous">` : '';
+  return `<div class="pdf-page">
+    <div class="pdf-title">Mayor – PO #${g(d.po)} – ${g(d.club)}</div>
+    <div class="pdf-subtitle">${d.colorname}</div>
+    <hr class="pdf-divider">
+    <div class="pdf-body">
+      <div class="pdf-left">
+        <div class="pdf-field"><b>${d.datelabel}:</b> ${g(d.datevalue)}</div>
+        <div class="pdf-field"><b>Pattern:</b> ${lnk(d.patternlink, d.patternlabel)} – same as second sample polo</div>
+        <div class="pdf-field"><b>Print:</b> ${lnk(d.printlink, d.printname)}</div>
+        <div class="pdf-field"><b>Repeat Size:</b> ${g(d.repeatsizeh+' inches high by '+d.repeatsizew+' inches wide')}</div>
+        <div class="pdf-field"><b>Stroke Thickness:</b> ${g(d.stroke+' inches')}</div>
+        <div class="pdf-field"><b>Color:</b> ${colorLine}</div>
+        <div class="pdf-field"><b>Quantity:</b> ${g(d.qty)}</div>
+        <div class="pdf-sizes">${sizeLines}</div>
+        <div class="pdf-section-title">Embroidery</div>
+        <div class="pdf-field"><b>Embroidery File:</b> ${g(d.embdesc)}${embFileLinks ? ' ('+embFileLinks+')' : ''}</div>
+        <div class="pdf-field"><b>Thread Color(s):</b> ${tcText}</div>
+        <div class="pdf-field"><b>Placement:</b> ${g(d.embplacement)}</div>
+        <div class="pdf-field"><b>Size:</b> ${g(d.embsizeh+' inches high by '+d.embsizew+' inches wide')}</div>
+        <div class="pdf-section-title">Mockup</div>
+        ${mockupHTML}
+      </div>
+      <div class="pdf-right">
+        <div class="mat-title" style="font-weight:bold;text-align:center;margin-bottom:8px;">Materials</div>
+        <div class="pdf-field" style="margin-bottom:8px;"><b>Fabric:</b> ${g('Premium polo fabric from Taiwan (92% poly / 8% spandex) – same as second sample polo')}</div>
+        <div class="pdf-field" style="margin-bottom:8px;"><b>Thread Color:</b> ${g(d.polothreadcolor)}</div>
+        <div class="pdf-field" style="margin-bottom:8px;"><b>Fusing:</b> ${g('Same color ('+d.fusingColor+') and thickness as second sample polo')}</div>
+        <div class="pdf-field" style="margin-bottom:8px;"><b>Buttons:</b> ${d.buttons}</div>
+        <div class="pdf-mat-row"><div class="mat-text"><b>Main Label (including size):</b> Woven<br>Label File: ${lnk(d.labellink,'Link')}<br>Size: ${d.labelsize}<br>Placement: ${d.labelplacement}</div><img src="${PO_LABEL_IMG_URL}" class="pdf-label-img" crossorigin="anonymous" onerror="this.style.display='none'"></div>
+        <div class="pdf-mat-row"><div class="mat-text"><b>Care Label:</b> Printed label sewn on the inside bottom left seam of the polo with 1 extra UNBRANDED button – same as second sample polo</div><img src="${PO_CARE_IMG_URL}" class="pdf-label-img" crossorigin="anonymous" onerror="this.style.display='none'"></div>
+        <div class="pdf-mat-row"><div class="mat-text"><b>Hang Tag:</b><br>Hang Tag File: ${lnk(d.hangtaglink,'Link')} (do not use Fenix-branded hang tags)<br>Size: ${d.hangtagsize}</div><img src="${PO_HANGTAG_IMG_URL}" class="pdf-label-img" crossorigin="anonymous" onerror="this.style.display='none'"></div>
+        <div class="pdf-field" style="margin-bottom:12px;"><b>Packaging:</b> Same as second sample polo, except use UNBRANDED plain poly bag (do not use Fenix-branded packaging). Also, please tape the boxes with UNBRANDED tape (do not use Fenix-branded tape).</div>
+        <div class="pdf-billing"><div class="billing-title">Billing/Delivery Address</div><p>${[d.addr1,d.addr2,d.addr3,d.addr4,d.addr5,d.addr6].filter(Boolean).join('<br>')}</p></div>
+      </div>
+    </div>
+    <div class="pdf-footer">Matt Bartini | Founder &amp; CEO | Mayor | 339-206-2111 | mayor@mayorclothing.com</div>
+  </div>`;
+}
+
+async function po_generateAllPDFs() {
+  const btn = document.getElementById('po-download-btn');
+  btn.textContent = 'Generating...';
+  btn.disabled = true;
+  try {
+    const { jsPDF } = window.jspdf;
+    const container = document.getElementById('pdf-pages-container');
+    container.innerHTML = '';
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'letter' });
+    const pageW = pdf.internal.pageSize.getWidth(), pageH = pdf.internal.pageSize.getHeight();
+    for (let i = 0; i < po_colorways.length; i++) {
+      const data = po_collectData(po_colorways[i].id);
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'position:absolute;left:0;top:0;';
+      wrapper.innerHTML = po_buildPDFPage(data);
+      container.appendChild(wrapper);
+      await new Promise(r => setTimeout(r, 400));
+      const pageEl = wrapper.querySelector('.pdf-page');
+      const canvas = await html2canvas(pageEl, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false });
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      const ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
+      const dw = canvas.width * ratio, dh = canvas.height * ratio;
+      if (i > 0) pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', (pageW-dw)/2, (pageH-dh)/2, dw, dh);
+      container.innerHTML = '';
+    }
+    const d0 = po_collectData(po_colorways[0].id);
+    pdf.save(`Mayor_PO_${d0.po||'XX'}_${(d0.club||'Order').replace(/[^a-z0-9]/gi,'_')}.pdf`);
+  } catch(err) {
+    console.error(err);
+    alert('PDF generation failed: ' + err.message);
+  }
+  btn.textContent = '⬇ Download PDF';
+  btn.disabled = false;
+}
+
+// Init PO generator
+po_addColorway();
 </script>
 </body>
 </html>
