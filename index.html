@@ -154,8 +154,9 @@
 
   /* PDF styles */
   .pdf-page { width: 1100px; background: white; font-family: Arial, sans-serif; font-size: 12px; color: #222; padding: 32px 40px 24px 40px; }
-  .pdf-title { text-align: center; font-size: 22px; font-weight: bold; color: #222; margin-bottom: 4px; }
-  .pdf-title .g { color: #2e7d32; }
+  .pdf-title { text-align: center; font-size: 22px; font-weight: bold; color: #222; margin-bottom: 4px; font-family: Arial, sans-serif; }
+  .pdf-title .po-green { color: #2e7d32; font-weight: bold; }
+  .pdf-title .club-green { color: #2e7d32; font-weight: bold; }
   .pdf-subtitle { text-align: center; font-size: 14px; color: #2e7d32; margin-bottom: 10px; }
   .pdf-divider { border: none; border-top: 1px solid #aaa; margin-bottom: 16px; }
   .pdf-body { display: flex; gap: 30px; }
@@ -1006,48 +1007,101 @@ function po_collectData(id) {
 }
 
 function po_buildPDFPage(d) {
-  const g = (t) => `<span class="g">${t}</span>`;
-  const lnk = (url, text) => `<a href="${url}" style="color:#2e7d32;text-decoration:underline;">${text}</a>`;
-  const sizeLines = Object.entries(d.sizes).map(([s,q]) => `<div class="size-line">${s}: ${g(q)}</div>`).join('');
-  const printColorStr = d.printColors.map(c => { let s = g(c.name); if (c.hex) s += ` ${g('(hex # '+c.hex+')')}`; return s; }).join(' and ');
-  const bgStr = [d.bgcolorname, d.bgcolorhex ? `(hex # ${d.bgcolorhex})` : ''].filter(Boolean).join(' ');
-  const colorLine = printColorStr ? printColorStr + (bgStr ? ` on ${g(bgStr)}` : '') : g(bgStr);
+  // Blue clickable link
+  const lnk = (url, text) => url ? `<a href="${url}" style="color:#1155cc;text-decoration:underline;">${text}</a>` : text;
+  // Hex code as icolorpalette hyperlink — strip spaces from hex for URL
+  const hexLnk = (hex) => {
+    if (!hex) return '';
+    const clean = hex.replace(/\s/g,'').replace('#','');
+    return `<a href="https://icolorpalette.com/color/${clean}" style="color:#1155cc;text-decoration:underline;">hex # ${hex}</a>`;
+  };
+  // Color name + hex with hyperlinked hex
+  const colorToken = (name, hex) => {
+    let s = name || '';
+    if (hex) s += (s ? ' ' : '') + '(' + hexLnk(hex) + ')';
+    return s;
+  };
+
+  const sizeLines = Object.entries(d.sizes).map(([s,q]) => `<div class="size-line">${s}: ${q}</div>`).join('');
+
+  // Print color line: "Navy (hex # ...) on White (hex # ...)"
+  const printColorStr = d.printColors.map(c => colorToken(c.name, c.hex)).join(' and ');
+  const bgToken = colorToken(d.bgcolorname, d.bgcolorhex);
+  const colorLine = printColorStr ? printColorStr + (bgToken ? ` on ${bgToken}` : '') : bgToken;
+
+  // Embroidery file links
   const embFileLinks = d.embfiles.map(f => lnk(f.url, f.label || f.url)).join(', ');
-  const tcText = d.threadColors.map(tc => { let s = g(tc.name); if (tc.hex) s += ` ${g('(hex # '+tc.hex+')')}`; return s; }).join(', ');
-  const mockupHTML = d.mockupurl ? `<img src="${d.mockupurl}" class="pdf-mockup-img" crossorigin="anonymous">` : '';
+
+  // Thread colors with linked hex
+  const tcText = d.threadColors.map(tc => colorToken(tc.name, tc.hex)).join(', ');
+
+  // Polo thread color — parse out name and hex from the synced string
+  const poloThreadDisplay = (() => {
+    // polothreadcolor is like "White (hex # ffffff) – same as second sample polo"
+    // Re-linkify any hex # in it
+    return d.polothreadcolor.replace(/hex # ([0-9a-fA-F]{3,8})/g, (match, h) => hexLnk(h));
+  })();
+
+  // Fusing — linkify hex
+  const fusingDisplay = `Same color (${d.fusingColor.replace(/hex # ([0-9a-fA-F]{3,8})/g, (m,h) => hexLnk(h))}) and thickness as second sample polo`;
+
+  const mockupHTML = d.mockupurl
+    ? `<div style="text-align:center;margin-top:6px;"><img src="${d.mockupurl}" style="max-width:200px;max-height:200px;" crossorigin="anonymous"></div>` : '';
+
   return `<div class="pdf-page">
-    <div class="pdf-title">Mayor – PO #${g(d.po)} – ${g(d.club)}</div>
-    <div class="pdf-subtitle">${d.colorname}</div>
+    <div class="pdf-title" style="font-family:Arial,sans-serif;">Mayor – PO #<b>${d.po}</b> – <b>${d.club}</b></div>
+    <div class="pdf-subtitle" style="text-align:center;font-size:14px;color:#222;margin-bottom:10px;font-family:Arial,sans-serif;">${d.colorname}</div>
     <hr class="pdf-divider">
-    <div class="pdf-body">
-      <div class="pdf-left">
-        <div class="pdf-field"><b>${d.datelabel}:</b> ${g(d.datevalue)}</div>
+    <div class="pdf-body" style="display:flex;gap:0;">
+      <div class="pdf-left" style="flex:0 0 340px;padding-right:24px;border-right:1px solid #aaa;">
+        <div class="pdf-field"><b>${d.datelabel}:</b> ${d.datevalue}</div>
         <div class="pdf-field"><b>Pattern:</b> ${lnk(d.patternlink, d.patternlabel)} – same as second sample polo</div>
         <div class="pdf-field"><b>Print:</b> ${lnk(d.printlink, d.printname)}</div>
-        <div class="pdf-field"><b>Repeat Size:</b> ${g(d.repeatsizeh+' inches high by '+d.repeatsizew+' inches wide')}</div>
-        <div class="pdf-field"><b>Stroke Thickness:</b> ${g(d.stroke+' inches')}</div>
+        <div class="pdf-field"><b>Repeat Size:</b> ${d.repeatsizeh} inches high by ${d.repeatsizew} inches wide</div>
+        <div class="pdf-field"><b>Stroke Thickness:</b> ${d.stroke} inches</div>
         <div class="pdf-field"><b>Color:</b> ${colorLine}</div>
-        <div class="pdf-field"><b>Quantity:</b> ${g(d.qty)}</div>
-        <div class="pdf-sizes">${sizeLines}</div>
+        <div class="pdf-field"><b>Quantity:</b> ${d.qty}</div>
+        <div class="pdf-sizes" style="margin-left:8px;margin-bottom:6px;">${sizeLines}</div>
         <div class="pdf-section-title">Embroidery</div>
-        <div class="pdf-field"><b>Embroidery File:</b> ${g(d.embdesc)}${embFileLinks ? ' ('+embFileLinks+')' : ''}</div>
+        <div class="pdf-field"><b>Embroidery File:</b> ${d.embdesc}${embFileLinks ? ' ('+embFileLinks+')' : ''}</div>
         <div class="pdf-field"><b>Thread Color(s):</b> ${tcText}</div>
-        <div class="pdf-field"><b>Placement:</b> ${g(d.embplacement)}</div>
-        <div class="pdf-field"><b>Size:</b> ${g(d.embsizeh+' inches high by '+d.embsizew+' inches wide')}</div>
+        <div class="pdf-field"><b>Placement:</b> ${d.embplacement}</div>
+        <div class="pdf-field"><b>Size:</b> ${d.embsizeh} inches high by ${d.embsizew} inches wide</div>
         <div class="pdf-section-title">Mockup</div>
         ${mockupHTML}
       </div>
-      <div class="pdf-right">
-        <div class="mat-title" style="font-weight:bold;text-align:center;margin-bottom:8px;">Materials</div>
-        <div class="pdf-field" style="margin-bottom:8px;"><b>Fabric:</b> ${g('Premium polo fabric from Taiwan (92% poly / 8% spandex) – same as second sample polo')}</div>
-        <div class="pdf-field" style="margin-bottom:8px;"><b>Thread Color:</b> ${g(d.polothreadcolor)}</div>
-        <div class="pdf-field" style="margin-bottom:8px;"><b>Fusing:</b> ${g('Same color ('+d.fusingColor+') and thickness as second sample polo')}</div>
+      <div class="pdf-right" style="flex:1;padding-left:24px;">
+        <div style="font-weight:bold;text-align:center;margin-bottom:8px;font-size:13px;">Materials</div>
+        <div class="pdf-field" style="margin-bottom:8px;"><b>Fabric:</b> Premium polo fabric from Taiwan (92% poly / 8% spandex) – same as second sample polo</div>
+        <div class="pdf-field" style="margin-bottom:8px;"><b>Thread Color:</b> ${poloThreadDisplay}</div>
+        <div class="pdf-field" style="margin-bottom:8px;"><b>Fusing:</b> ${fusingDisplay}</div>
         <div class="pdf-field" style="margin-bottom:8px;"><b>Buttons:</b> ${d.buttons}</div>
-        <div class="pdf-mat-row"><div class="mat-text"><b>Main Label (including size):</b> Woven<br>Label File: ${lnk(d.labellink,'Link')}<br>Size: ${d.labelsize}<br>Placement: ${d.labelplacement}</div><img src="${PO_LABEL_IMG_URL}" class="pdf-label-img" crossorigin="anonymous" onerror="this.style.display='none'"></div>
-        <div class="pdf-mat-row"><div class="mat-text"><b>Care Label:</b> Printed label sewn on the inside bottom left seam of the polo with 1 extra UNBRANDED button – same as second sample polo</div><img src="${PO_CARE_IMG_URL}" class="pdf-label-img" crossorigin="anonymous" onerror="this.style.display='none'"></div>
-        <div class="pdf-mat-row"><div class="mat-text"><b>Hang Tag:</b><br>Hang Tag File: ${lnk(d.hangtaglink,'Link')} (do not use Fenix-branded hang tags)<br>Size: ${d.hangtagsize}</div><img src="${PO_HANGTAG_IMG_URL}" class="pdf-label-img" crossorigin="anonymous" onerror="this.style.display='none'"></div>
+        <div class="pdf-mat-row">
+          <div class="mat-text">
+            <b>Main Label (including size):</b> Woven<br>
+            Label File: ${lnk(d.labellink,'Link')}<br>
+            Size: ${d.labelsize}<br>
+            Placement: ${d.labelplacement}
+          </div>
+          <img src="${PO_LABEL_IMG_URL}" class="pdf-label-img" crossorigin="anonymous" onerror="this.style.display='none'">
+        </div>
+        <div class="pdf-mat-row">
+          <div class="mat-text"><b>Care Label:</b> Printed label sewn on the inside bottom left seam of the polo with 1 extra UNBRANDED button – same as second sample polo</div>
+          <img src="${PO_CARE_IMG_URL}" class="pdf-label-img" crossorigin="anonymous" onerror="this.style.display='none'">
+        </div>
+        <div class="pdf-mat-row">
+          <div class="mat-text">
+            <b>Hang Tag:</b><br>
+            Hang Tag File: ${lnk(d.hangtaglink,'Link')} (do not use Fenix-branded hang tags)<br>
+            Size: ${d.hangtagsize}
+          </div>
+          <img src="${PO_HANGTAG_IMG_URL}" class="pdf-label-img" crossorigin="anonymous" onerror="this.style.display='none'">
+        </div>
         <div class="pdf-field" style="margin-bottom:12px;"><b>Packaging:</b> Same as second sample polo, except use UNBRANDED plain poly bag (do not use Fenix-branded packaging). Also, please tape the boxes with UNBRANDED tape (do not use Fenix-branded tape).</div>
-        <div class="pdf-billing"><div class="billing-title">Billing/Delivery Address</div><p>${[d.addr1,d.addr2,d.addr3,d.addr4,d.addr5,d.addr6].filter(Boolean).join('<br>')}</p></div>
+        <div class="pdf-billing">
+          <div class="billing-title">Billing/Delivery Address</div>
+          <p>${[d.addr1,d.addr2,d.addr3,d.addr4,d.addr5,d.addr6].filter(Boolean).join('<br>')}</p>
+        </div>
       </div>
     </div>
     <div class="pdf-footer">Matt Bartini | Founder &amp; CEO | Mayor | 339-206-2111 | mayor@mayorclothing.com</div>
