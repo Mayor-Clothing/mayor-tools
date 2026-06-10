@@ -1031,28 +1031,35 @@ function po_collectData(id) {
 }
 
 function po_buildPDFPage(d) {
-  // Blue clickable link
-  const lnk = (url, text) => url ? `<a href="${url}" style="color:#1155cc;text-decoration:underline;">${text}</a>` : text;
+  const BLUE = '#1155cc';
+  const F = '"Baskerville","Baskerville Old Face","Garamond",serif';
+  const fs = '12px';
+  const lh = '1.55';
+  const mb = 'margin-bottom:10px;';
 
-  // Hex code as icolorpalette hyperlink — no space between # and hex digits
+  // Only actual hyperlinks get color — everything else is black
+  const lnk = (url, text) => url
+    ? `<a href="${url}" style="color:${BLUE};text-decoration:underline;">${text}</a>`
+    : text;
+
   const hexLnk = (hex) => {
     if (!hex) return '';
     const clean = hex.replace(/\s/g,'').replace(/^#+/,'');
-    return `<a href="https://icolorpalette.com/color/${clean}" style="color:#1155cc;text-decoration:underline;">hex #${clean}</a>`;
+    return `<a href="https://icolorpalette.com/color/${clean}" style="color:${BLUE};text-decoration:underline;">hex # ${clean}</a>`;
   };
 
-  // Normalize a hex value entered by user (strip spaces/hash for URL, keep clean display)
+  // Color name is black, hex is a blue hyperlink
   const colorToken = (name, hex) => {
-    let s = name ? `<span style="color:#222;">${name}</span>` : '';
+    let s = name || '';
     if (hex) {
       const clean = hex.replace(/\s/g,'').replace(/^#+/,'');
-      s += (s ? ' ' : '') + `(<a href="https://icolorpalette.com/color/${clean}" style="color:#1155cc;text-decoration:underline;">hex #${clean}</a>)`;
+      s += (s ? ' ' : '') + `(${hexLnk(clean)})`;
     }
     return s;
   };
 
   const sizeLines = Object.entries(d.sizes)
-    .map(([s,q]) => `<div style="margin-bottom:1px;">${s}: ${q}</div>`).join('');
+    .map(([s,q]) => `<div>${s}: ${q}</div>`).join('');
 
   const printColorStr = d.printColors.map(c => colorToken(c.name, c.hex)).join(' and ');
   const bgToken = colorToken(d.bgcolorname, d.bgcolorhex);
@@ -1065,93 +1072,89 @@ function po_buildPDFPage(d) {
 
   const tcText = d.threadColors.map(tc => colorToken(tc.name, tc.hex)).join(', ');
 
-  // Re-linkify hex codes in polo thread string
-  const poloThreadDisplay = d.polothreadcolor.replace(/hex\s*#\s*([0-9a-fA-F]{3,8})/g,
-    (m, h) => `<a href="https://icolorpalette.com/color/${h}" style="color:#1155cc;text-decoration:underline;">hex #${h}</a>`);
+  // Polo thread: replace any hex value with a blue hyperlink, rest stays black
+  const poloThreadDisplay = d.polothreadcolor.replace(/hex\s*#?\s*([0-9a-fA-F]{3,8})/g,
+    (m, h) => hexLnk(h));
 
-  const fusingHex = d.fusingColor.replace(/hex\s*#\s*([0-9a-fA-F]{3,8})/g,
-    (m, h) => `<a href="https://icolorpalette.com/color/${h}" style="color:#1155cc;text-decoration:underline;">hex #${h}</a>`);
-  const fusingDisplay = `Same color (${fusingHex}) and thickness as second sample polo`;
+  // Fusing: same — only hex becomes a link
+  const fusingDisplay = `Same color (${d.fusingColor.replace(/hex\s*#?\s*([0-9a-fA-F]{3,8})/g, (m,h) => hexLnk(h))}) and thickness as second sample polo`;
 
   const mockupHTML = d.mockupurl
-    ? `<div style="text-align:center;margin-top:8px;"><img src="${d.mockupurl}" style="max-width:220px;max-height:220px;" crossorigin="anonymous"></div>` : '';
+    ? `<div style="text-align:center;margin-top:10px;"><img src="${d.mockupurl}" style="max-width:200px;max-height:200px;" crossorigin="anonymous"></div>` : '';
 
-  // Material image helper — use hardcoded base64 images
   const matImg = (b64) => b64
-    ? `<img src="${b64}" style="width:90px;height:70px;object-fit:cover;border:1px solid #ddd;flex-shrink:0;margin-left:10px;">`
+    ? `<img src="${b64}" style="width:90px;height:60px;object-fit:cover;border:1px solid #ddd;display:block;margin-top:2px;">`
     : '';
 
-  return `<div class="pdf-page" style="width:1200px;background:white;font-family:Arial,sans-serif;font-size:11.5px;color:#222;padding:28px 36px 20px 36px;line-height:1.45;">
-    <div style="text-align:center;font-size:21px;font-weight:bold;font-family:Arial,sans-serif;color:#222;margin-bottom:3px;">Mayor – PO #${d.po} – ${d.club}</div>
-    <div style="text-align:center;font-size:13px;color:#222;margin-bottom:10px;font-family:Arial,sans-serif;">${d.colorname}</div>
+  return `<div style="width:1100px;background:white;font-family:${F};font-size:${fs};color:#222;padding:30px 40px 24px 40px;line-height:${lh};">
+    <div style="text-align:center;font-size:22px;font-weight:bold;margin-bottom:4px;">Mayor – PO #${d.po} – ${d.club}</div>
+    <div style="text-align:center;font-size:13px;margin-bottom:10px;">${d.colorname}</div>
     <hr style="border:none;border-top:1px solid #aaa;margin-bottom:14px;">
-    <div style="display:flex;gap:0;align-items:stretch;">
+    <div style="display:flex;gap:0;">
 
-      <!-- LEFT COLUMN -->
-      <div style="flex:0 0 400px;padding-right:22px;border-right:1px solid #bbb;">
-        <div style="margin-bottom:5px;"><b>${d.datelabel}:</b> ${d.datevalue}</div>
-        <div style="margin-bottom:5px;"><b>Pattern:</b> ${lnk(d.patternlink, d.patternlabel)} – same as second sample polo</div>
-        <div style="margin-bottom:5px;"><b>Print:</b> ${lnk(d.printlink, d.printname)}</div>
-        <div style="margin-bottom:5px;"><b>Repeat Size:</b> ${d.repeatsizeh} inches high by ${d.repeatsizew} inches wide</div>
-        <div style="margin-bottom:5px;"><b>Stroke Thickness:</b> ${d.stroke} inches</div>
-        <div style="margin-bottom:5px;"><b>Color:</b> ${colorLine}</div>
-        <div style="margin-bottom:3px;"><b>Quantity:</b> ${d.qty}</div>
-        <div style="margin-left:10px;margin-bottom:8px;">${sizeLines}</div>
+      <!-- LEFT -->
+      <div style="flex:0 0 370px;padding-right:24px;border-right:1px solid #aaa;">
+        <div style="${mb}"><b>${d.datelabel}:</b> ${d.datevalue}</div>
+        <div style="${mb}"><b>Pattern:</b> ${lnk(d.patternlink, d.patternlabel)} – same as second sample polo</div>
+        <div style="${mb}"><b>Print:</b> ${lnk(d.printlink, d.printname)}</div>
+        <div style="${mb}"><b>Repeat Size:</b> ${d.repeatsizeh} inches high by ${d.repeatsizew} inches wide</div>
+        <div style="${mb}"><b>Stroke Thickness:</b> ${d.stroke} inches</div>
+        <div style="${mb}"><b>Color:</b> ${colorLine}</div>
+        <div style="margin-bottom:4px;"><b>Quantity:</b> ${d.qty}</div>
+        <div style="margin-left:8px;margin-bottom:10px;line-height:1.6;">${sizeLines}</div>
 
-        <div style="text-align:center;font-weight:bold;font-size:12px;margin:10px 0 6px;">Embroidery</div>
-        <div style="margin-bottom:5px;"><b>Embroidery File:</b> ${d.embdesc}${embFileParts ? ' (' + embFileParts + ')' : ''}</div>
-        <div style="margin-bottom:5px;"><b>Thread Color(s):</b> ${tcText}</div>
-        <div style="margin-bottom:5px;"><b>Placement:</b> ${d.embplacement}</div>
-        <div style="margin-bottom:5px;"><b>Size:</b> ${d.embsizeh} inches high by ${d.embsizew} inches wide</div>
+        <div style="text-align:center;font-weight:bold;margin:14px 0 10px;">Embroidery</div>
+        <div style="${mb}"><b>Embroidery File:</b> ${d.embdesc}${embFileParts ? ' ('+embFileParts+')' : ''}</div>
+        <div style="${mb}"><b>Thread Color(s):</b> ${tcText}</div>
+        <div style="${mb}"><b>Placement:</b> ${d.embplacement}</div>
+        <div style="${mb}"><b>Size:</b> ${d.embsizeh} inches high by ${d.embsizew} inches wide</div>
 
-        <div style="text-align:center;font-weight:bold;font-size:12px;margin:10px 0 6px;">Mockup</div>
+        <div style="text-align:center;font-weight:bold;margin:14px 0 6px;">Mockup</div>
         ${mockupHTML}
       </div>
 
-      <!-- RIGHT COLUMN -->
-      <div style="flex:1;padding-left:22px;">
-        <div style="text-align:center;font-weight:bold;font-size:12px;margin-bottom:16px;">Materials</div>
+      <!-- RIGHT -->
+      <div style="flex:1;padding-left:24px;">
+        <div style="text-align:center;font-weight:bold;margin-bottom:14px;">Materials</div>
 
-        <div style="margin-bottom:14px;"><b>Fabric:</b> Premium polo fabric from Taiwan (92% poly / 8% spandex) – same as second sample polo</div>
-        <div style="margin-bottom:14px;"><b>Thread Color:</b> ${poloThreadDisplay}</div>
-        <div style="margin-bottom:14px;"><b>Fusing:</b> ${fusingDisplay}</div>
-        <div style="margin-bottom:14px;"><b>Buttons:</b> ${d.buttons}</div>
+        <div style="${mb}"><b>Fabric:</b> Premium polo fabric from Taiwan (92% poly / 8% spandex) – same as second sample polo</div>
+        <div style="${mb}"><b>Thread Color:</b> ${poloThreadDisplay}</div>
+        <div style="${mb}"><b>Fusing:</b> ${fusingDisplay}</div>
+        <div style="${mb}"><b>Buttons:</b> ${d.buttons}</div>
 
-        <div style="display:flex;align-items:flex-start;margin-bottom:16px;">
-          <div style="flex:1;line-height:1.6;">
-            <b>Main Label (including size):</b> Woven<br>
-            Label File: ${lnk(d.labellink,'Link')}<br>
-            Size: ${d.labelsize}<br>
-            Placement: ${d.labelplacement}
+        <div style="display:flex;align-items:flex-start;${mb}">
+          <div style="flex:1;">
+            <div><b>Main Label (including size):</b> Woven</div>
+            <div>Label File: ${lnk(d.labellink,'Link')}</div>
+            <div>Size: ${d.labelsize}</div>
+            <div>Placement: ${d.labelplacement}</div>
           </div>
-          ${matImg(PO_LABEL_IMG_B64)}
+          <div style="margin-left:12px;flex-shrink:0;">${matImg(PO_LABEL_IMG_B64)}</div>
         </div>
 
-        <div style="display:flex;align-items:flex-start;margin-bottom:16px;">
-          <div style="flex:1;line-height:1.6;">
-            <b>Care Label:</b> Printed label sewn on the inside bottom left seam of the polo with 1 extra UNBRANDED button – same as second sample polo
-          </div>
-          ${matImg(PO_CARE_IMG_B64)}
+        <div style="display:flex;align-items:flex-start;${mb}">
+          <div style="flex:1;"><b>Care Label:</b> Printed label sewn on the inside bottom left seam of the polo with 1 extra UNBRANDED button – same as second sample polo</div>
+          <div style="margin-left:12px;flex-shrink:0;">${matImg(PO_CARE_IMG_B64)}</div>
         </div>
 
-        <div style="display:flex;align-items:flex-start;margin-bottom:16px;">
-          <div style="flex:1;line-height:1.6;">
-            <b>Hang Tag:</b><br>
-            Hang Tag File: ${lnk(d.hangtaglink,'Link')} (do not use Fenix-branded hang tags)<br>
-            Size: ${d.hangtagsize}
+        <div style="display:flex;align-items:flex-start;${mb}">
+          <div style="flex:1;">
+            <div><b>Hang Tag:</b></div>
+            <div>Hang Tag File: ${lnk(d.hangtaglink,'Link')} (do not use Fenix-branded hang tags)</div>
+            <div>Size: ${d.hangtagsize}</div>
           </div>
-          ${matImg(PO_HANGTAG_IMG_B64)}
+          <div style="margin-left:12px;flex-shrink:0;">${matImg(PO_HANGTAG_IMG_B64)}</div>
         </div>
 
-        <div style="margin-bottom:16px;line-height:1.6;"><b>Packaging:</b> Same as second sample polo, except use UNBRANDED plain poly bag (do not use Fenix-branded packaging). Also, please tape the boxes with UNBRANDED tape (do not use Fenix-branded tape).</div>
+        <div style="${mb}"><b>Packaging:</b> Same as second sample polo, except use UNBRANDED plain poly bag (do not use Fenix-branded packaging). Also, please tape the boxes with UNBRANDED tape (do not use Fenix-branded tape).</div>
 
-        <div style="margin-top:16px;">
-          <div style="font-weight:bold;text-align:center;margin-bottom:8px;">Billing/Delivery Address</div>
-          <div style="line-height:1.9;">${[d.addr1,d.addr2,d.addr3,d.addr4,d.addr5,d.addr6].filter(Boolean).join('<br>')}</div>
+        <div style="margin-top:20px;">
+          <div style="font-weight:bold;text-align:center;margin-bottom:6px;">Billing/Delivery Address</div>
+          <div style="line-height:1.7;">${[d.addr1,d.addr2,d.addr3,d.addr4,d.addr5,d.addr6].filter(Boolean).join('<br>')}</div>
         </div>
       </div>
     </div>
-    <div style="border-top:1px solid #aaa;text-align:center;font-size:10.5px;color:#444;padding-top:8px;margin-top:14px;font-family:Arial,sans-serif;white-space:nowrap;">Matt Bartini | Founder &amp; CEO | Mayor | 339-206-2111 | mayor@mayorclothing.com</div>
+    <div style="border-top:1px solid #aaa;text-align:center;font-size:11px;color:#444;padding-top:8px;margin-top:16px;">Matt Bartini | Founder &amp; CEO | Mayor | 339-206-2111 | mayor@mayorclothing.com</div>
   </div>`;
 }
 
@@ -1161,54 +1164,64 @@ async function po_generateAllPDFs() {
   btn.disabled = true;
   try {
     const { jsPDF } = window.jspdf;
-    const d0 = po_collectData(po_colorways[0].id);
-    const filename = `Mayor_PO_${d0.po||'XX'}_${(d0.club||'Order').replace(/[^a-z0-9]/gi,'_')}.pdf`;
-
-    // Build all pages as HTML
     const container = document.getElementById('pdf-pages-container');
     container.innerHTML = '';
 
-    // Render each colorway as a separate div
-    const pageEls = [];
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'letter' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+
     for (let i = 0; i < po_colorways.length; i++) {
       const data = po_collectData(po_colorways[i].id);
       const wrapper = document.createElement('div');
-      wrapper.style.cssText = 'display:block;page-break-after:always;';
+      wrapper.style.cssText = 'position:absolute;left:0;top:0;';
       wrapper.innerHTML = po_buildPDFPage(data);
       container.appendChild(wrapper);
-      pageEls.push(wrapper);
-    }
 
-    // Use jsPDF.html() which preserves clickable links
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [1200, 850], hotfixes: ['px_scaling'] });
+      // Wait for images
+      await new Promise(r => setTimeout(r, 500));
 
-    const renderPage = (idx) => new Promise((resolve) => {
-      if (idx >= po_colorways.length) { resolve(); return; }
-      const data = po_collectData(po_colorways[idx].id);
-      const tempDiv = document.createElement('div');
-      tempDiv.style.cssText = 'position:absolute;left:0;top:0;';
-      tempDiv.innerHTML = po_buildPDFPage(data);
-      container.innerHTML = '';
-      container.appendChild(tempDiv);
-
-      if (idx > 0) pdf.addPage([1200, 850], 'landscape');
-
-      pdf.html(tempDiv.querySelector('.pdf-page'), {
-        callback: () => resolve(),
-        x: 0, y: 0,
-        html2canvas: { scale: 1, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false },
-        autoPaging: false,
-        width: 1200,
-        windowWidth: 1200,
+      const pageEl = wrapper.querySelector('div');
+      const canvas = await html2canvas(pageEl, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
       });
-    });
 
-    for (let i = 0; i < po_colorways.length; i++) {
-      await renderPage(i);
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
+      const dw = canvas.width * ratio;
+      const dh = canvas.height * ratio;
+      const offX = (pageW - dw) / 2;
+      const offY = (pageH - dh) / 2;
+
+      if (i > 0) pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', offX, offY, dw, dh);
+
+      // Add clickable link annotations over the image
+      const scaleX = dw / pageEl.offsetWidth;
+      const scaleY = dh / pageEl.offsetHeight;
+      pageEl.querySelectorAll('a[href]').forEach(a => {
+        const href = a.getAttribute('href');
+        if (!href || href === '#') return;
+        const rect = a.getBoundingClientRect();
+        const containerRect = pageEl.getBoundingClientRect();
+        const rx = offX + (rect.left - containerRect.left) * scaleX;
+        const ry = offY + (rect.top  - containerRect.top)  * scaleY;
+        const rw = rect.width  * scaleX;
+        const rh = rect.height * scaleY;
+        if (rw > 0 && rh > 0) {
+          pdf.link(rx, ry, rw, rh, { url: href });
+        }
+      });
+
+      container.innerHTML = '';
     }
 
-    container.innerHTML = '';
-    pdf.save(filename);
+    const d0 = po_collectData(po_colorways[0].id);
+    pdf.save(`Mayor_PO_${d0.po||'XX'}_${(d0.club||'Order').replace(/[^a-z0-9]/gi,'_')}.pdf`);
   } catch(err) {
     console.error(err);
     alert('PDF generation failed: ' + err.message);
