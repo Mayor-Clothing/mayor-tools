@@ -1077,7 +1077,7 @@ function po_buildPDFPage(d) {
   const lh = '1.6';
   const mb = 'margin-bottom:12px;';
 
-  return `<div style="width:1100px;background:white;font-family:${F};font-size:${fs};color:#000;padding:36px 48px 28px 60px;line-height:${lh};display:flex;flex-direction:column;">
+  return `<div style="width:1100px;background:white;font-family:${F};font-size:${fs};color:#000;padding:36px 48px 28px 48px;line-height:${lh};display:flex;flex-direction:column;">
 
     <!-- TITLE -->
     <div style="text-align:center;font-size:22px;font-weight:bold;margin-bottom:4px;">Mayor – PO #${d.po} – ${d.club}</div>
@@ -1088,7 +1088,7 @@ function po_buildPDFPage(d) {
     <div style="display:flex;gap:0;flex:1;">
 
       <!-- LEFT COLUMN: order info -->
-      <div style="flex:0 0 380px;padding-right:28px;border-right:1px solid #aaa;">
+      <div style="flex:0 0 380px;padding-left:20px;padding-right:28px;border-right:1px solid #aaa;">
 
         <div style="${mb}"><b>${d.datelabel}:</b> ${d.datevalue}</div>
         <div style="${mb}"><b>Pattern:</b> ${lnk(d.patternlink, d.patternlabel)} – same as second sample polo</div>
