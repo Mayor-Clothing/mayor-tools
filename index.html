@@ -1073,7 +1073,7 @@ function po_buildPDFPage(d) {
   const mockupHTML = d.mockupurl
     ? `<div style="text-align:center;margin-top:10px;"><img src="${d.mockupurl}" style="max-width:190px;max-height:190px;" crossorigin="anonymous"></div>` : '';
 
-  const fs = '12px';
+  const fs = '11px';
   const lh = '1.6';
   const mb = 'margin-bottom:12px;';
 
@@ -1109,66 +1109,47 @@ function po_buildPDFPage(d) {
         ${mockupHTML}
       </div>
 
-      <!-- RIGHT COLUMN: materials on top, images on bottom -->
+      <!-- RIGHT COLUMN -->
       <div style="flex:1;padding-left:28px;display:flex;flex-direction:column;">
 
-        <!-- TOP: materials text -->
-        <div style="flex:1;">
-          <div style="text-align:center;font-weight:bold;font-size:13px;margin-bottom:16px;">Materials</div>
+        <div style="text-align:center;font-weight:bold;font-size:12px;margin-bottom:14px;">Materials</div>
 
-          <div style="${mb}"><b>Fabric:</b> Premium polo fabric from Taiwan (92% poly / 8% spandex) – same as second sample polo</div>
-          <div style="${mb}"><b>Thread Color:</b> ${poloThreadDisplay}</div>
-          <div style="${mb}"><b>Fusing:</b> ${fusingDisplay}</div>
-          <div style="${mb}"><b>Buttons:</b> ${d.buttons}</div>
+        <div style="${mb}"><b>Fabric:</b> Premium polo fabric from Taiwan (92% poly / 8% spandex) – same as second sample polo</div>
+        <div style="${mb}"><b>Thread Color:</b> ${poloThreadDisplay}</div>
+        <div style="${mb}"><b>Fusing:</b> ${fusingDisplay}</div>
+        <div style="${mb}"><b>Buttons:</b> ${d.buttons}</div>
 
-          <div style="${mb}">
+        <div style="display:flex;align-items:flex-start;${mb}">
+          <div style="flex:1;">
             <div><b>Main Label (including size):</b> Woven</div>
             <div>Label File: ${lnk(d.labellink,'Link')}</div>
             <div>Size: ${d.labelsize}</div>
             <div>Placement: ${d.labelplacement}</div>
           </div>
+          <img src="${PO_LABEL_IMG_B64}" style="width:100px;height:66px;object-fit:cover;border:1px solid #ddd;flex-shrink:0;margin-left:12px;">
+        </div>
 
-          <div style="${mb}"><b>Care Label:</b> Printed label sewn on the inside bottom left seam of the polo with 1 extra UNBRANDED button – same as second sample polo</div>
+        <div style="display:flex;align-items:flex-start;${mb}">
+          <div style="flex:1;"><b>Care Label:</b> Printed label sewn on the inside bottom left seam of the polo with 1 extra UNBRANDED button – same as second sample polo</div>
+          <img src="${PO_CARE_IMG_B64}" style="width:100px;height:66px;object-fit:cover;border:1px solid #ddd;flex-shrink:0;margin-left:12px;">
+        </div>
 
-          <div style="${mb}">
+        <div style="display:flex;align-items:flex-start;${mb}">
+          <div style="flex:1;">
             <div><b>Hang Tag:</b></div>
             <div>Hang Tag File: ${lnk(d.hangtaglink,'Link')} (do not use Fenix-branded hang tags)</div>
             <div>Size: ${d.hangtagsize}</div>
           </div>
-
-          <div style="${mb}"><b>Packaging:</b> Same as second sample polo, except use UNBRANDED plain poly bag (do not use Fenix-branded packaging). Also, please tape the boxes with UNBRANDED tape (do not use Fenix-branded tape).</div>
+          <img src="${PO_HANGTAG_IMG_B64}" style="width:100px;height:66px;object-fit:cover;border:1px solid #ddd;flex-shrink:0;margin-left:12px;">
         </div>
 
-        <!-- DIVIDER -->
-        <hr style="border:none;border-top:1px solid #aaa;margin:12px 0;">
+        <div style="${mb}"><b>Packaging:</b> Same as second sample polo, except use UNBRANDED plain poly bag (do not use Fenix-branded packaging). Also, please tape the boxes with UNBRANDED tape (do not use Fenix-branded tape).</div>
 
-        <!-- BOTTOM: three tag images side by side -->
-        <div style="display:flex;gap:16px;justify-content:flex-end;align-items:flex-start;padding-bottom:8px;">
-          <div style="text-align:center;">
-            <img src="${PO_LABEL_IMG_B64}" style="width:120px;height:80px;object-fit:cover;border:1px solid #ddd;display:block;">
-            <div style="font-size:10px;margin-top:4px;color:#555;">Main Label</div>
-          </div>
-          <div style="text-align:center;">
-            <img src="${PO_CARE_IMG_B64}" style="width:120px;height:80px;object-fit:cover;border:1px solid #ddd;display:block;">
-            <div style="font-size:10px;margin-top:4px;color:#555;">Care Label</div>
-          </div>
-          <div style="text-align:center;">
-            <img src="${PO_HANGTAG_IMG_B64}" style="width:120px;height:80px;object-fit:cover;border:1px solid #ddd;display:block;">
-            <div style="font-size:10px;margin-top:4px;color:#555;">Hang Tag</div>
-          </div>
+        <div style="margin-top:16px;">
+          <div style="font-weight:bold;text-align:center;font-size:12px;margin-bottom:6px;">Billing/Delivery Address</div>
+          <div style="line-height:1.7;">${[d.addr1,d.addr2,d.addr3,d.addr4,d.addr5,d.addr6].filter(Boolean).join('<br>')}</div>
         </div>
 
-      </div>
-    </div>
-
-    <!-- BILLING + FOOTER -->
-    <div style="display:flex;gap:0;margin-top:16px;border-top:1px solid #aaa;padding-top:12px;">
-      <div style="flex:0 0 380px;padding-right:28px;">
-        <!-- empty under left col -->
-      </div>
-      <div style="flex:1;padding-left:28px;">
-        <div style="font-weight:bold;text-align:center;margin-bottom:6px;">Billing/Delivery Address</div>
-        <div style="line-height:1.7;">${[d.addr1,d.addr2,d.addr3,d.addr4,d.addr5,d.addr6].filter(Boolean).join('<br>')}</div>
       </div>
     </div>
 
