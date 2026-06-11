@@ -1079,50 +1079,50 @@ function po_buildPDFPage(d) {
     ? `<img src="${b64}" style="width:90px;height:60px;object-fit:cover;border:1px solid #ddd;display:block;">`
     : '';
 
-  return `<div style="width:1100px;background:white;font-family:${F};font-size:12px;color:#000;padding:30px 40px 24px 40px;line-height:1.5;">
+  return `<div style="width:1100px;background:white;font-family:${F};font-size:12px;color:#000;padding:36px 52px 32px 52px;line-height:1.55;">
 
     <div style="text-align:center;font-size:22px;font-weight:bold;margin-bottom:4px;">Mayor – PO #${d.po} – ${d.club}</div>
-    <div style="text-align:center;font-size:13px;margin-bottom:10px;">${d.colorname}</div>
-    <hr style="border:none;border-top:1px solid #000;margin-bottom:14px;">
+    <div style="text-align:center;font-size:13px;margin-bottom:12px;">${d.colorname}</div>
+    <hr style="border:none;border-top:1px solid #aaa;margin-bottom:18px;">
 
     <div style="display:flex;gap:0;">
 
       <!-- LEFT COLUMN -->
-      <div style="flex:0 0 370px;padding-right:24px;border-right:1px solid #000;font-size:12px;">
+      <div style="flex:0 0 380px;padding-right:28px;border-right:1px solid #aaa;">
 
-        <div style="margin-bottom:5px;"><b>${d.datelabel}:</b> ${d.datevalue}</div>
-        <div style="margin-bottom:5px;"><b>Pattern:</b> ${lnk(d.patternlink, d.patternlabel)} – same as second sample polo</div>
-        <div style="margin-bottom:5px;"><b>Print:</b> ${lnk(d.printlink, d.printname)}</div>
-        <div style="margin-bottom:5px;"><b>Repeat Size:</b> ${d.repeatsizeh} inches high by ${d.repeatsizew} inches wide</div>
-        <div style="margin-bottom:5px;"><b>Stroke Thickness:</b> ${d.stroke} inches</div>
-        <div style="margin-bottom:5px;"><b>Color:</b> ${colorLine}</div>
-        <div style="margin-bottom:3px;"><b>Quantity:</b> ${d.qty}</div>
-        <div style="margin-left:8px;margin-bottom:0;line-height:1.5;">${sizeLines}</div>
+        <div style="margin-bottom:10px;"><b>${d.datelabel}:</b> ${d.datevalue}</div>
+        <div style="margin-bottom:10px;"><b>Pattern:</b> ${lnk(d.patternlink, d.patternlabel)} – same as second sample polo</div>
+        <div style="margin-bottom:10px;"><b>Print:</b> ${lnk(d.printlink, d.printname)}</div>
+        <div style="margin-bottom:10px;"><b>Repeat Size:</b> ${d.repeatsizeh} inches high by ${d.repeatsizew} inches wide</div>
+        <div style="margin-bottom:10px;"><b>Stroke Thickness:</b> ${d.stroke} inches</div>
+        <div style="margin-bottom:10px;"><b>Color:</b> ${colorLine}</div>
+        <div style="margin-bottom:4px;"><b>Quantity:</b> ${d.qty}</div>
+        <div style="margin-left:10px;margin-bottom:10px;line-height:1.6;">${sizeLines}</div>
 
-        <div style="text-align:center;font-weight:bold;margin:18px 0 10px;">Embroidery</div>
-        <div style="margin-bottom:5px;"><b>Embroidery File:</b> ${d.embdesc}${embFileParts ? ' ('+embFileParts+')' : ''}</div>
-        <div style="margin-bottom:5px;"><b>Thread Color(s):</b> ${tcText}</div>
-        <div style="margin-bottom:5px;"><b>Placement:</b> ${d.embplacement}</div>
-        <div style="margin-bottom:5px;"><b>Size:</b> ${d.embsizeh} inches high by ${d.embsizew} inches wide</div>
+        <div style="text-align:center;font-weight:bold;font-size:13px;margin:20px 0 12px;">Embroidery</div>
+        <div style="margin-bottom:10px;"><b>Embroidery File:</b> ${d.embdesc}${embFileParts ? ' ('+embFileParts+')' : ''}</div>
+        <div style="margin-bottom:10px;"><b>Thread Color(s):</b> ${tcText}</div>
+        <div style="margin-bottom:10px;"><b>Placement:</b> ${d.embplacement}</div>
+        <div style="margin-bottom:10px;"><b>Size:</b> ${d.embsizeh} inches high by ${d.embsizew} inches wide</div>
 
-        <div style="text-align:center;font-weight:bold;margin:18px 0 10px;">Mockup</div>
+        <div style="text-align:center;font-weight:bold;font-size:13px;margin:20px 0 10px;">Mockup</div>
         ${mockupHTML}
       </div>
 
       <!-- RIGHT COLUMN -->
-      <div style="flex:1;padding-left:24px;font-size:12px;">
+      <div style="flex:1;padding-left:28px;">
 
-        <div style="text-align:center;font-weight:bold;margin-bottom:16px;">Materials</div>
+        <div style="text-align:center;font-weight:bold;font-size:13px;margin-bottom:18px;">Materials</div>
 
-        <div style="margin-bottom:16px;"><b>Fabric:</b> Premium polo fabric from Taiwan (92% poly / 8% spandex) – same as second sample polo</div>
+        <div style="margin-bottom:14px;"><b>Fabric:</b> Premium polo fabric from Taiwan (92% poly / 8% spandex) – same as second sample polo</div>
 
-        <div style="margin-bottom:16px;"><b>Thread Color:</b> ${poloThreadDisplay}</div>
+        <div style="margin-bottom:14px;"><b>Thread Color:</b> ${poloThreadDisplay}</div>
 
-        <div style="margin-bottom:16px;"><b>Fusing:</b> ${fusingDisplay}</div>
+        <div style="margin-bottom:14px;"><b>Fusing:</b> ${fusingDisplay}</div>
 
-        <div style="margin-bottom:16px;"><b>Buttons:</b> ${d.buttons}</div>
+        <div style="margin-bottom:14px;"><b>Buttons:</b> ${d.buttons}</div>
 
-        <div style="display:flex;align-items:flex-start;margin-bottom:16px;">
+        <div style="display:flex;align-items:flex-start;margin-bottom:14px;">
           <div style="flex:1;">
             <div><b>Main Label (including size):</b> Woven</div>
             <div>Label File: ${lnk(d.labellink,'Link')}</div>
@@ -1132,12 +1132,12 @@ function po_buildPDFPage(d) {
           <div style="margin-left:14px;flex-shrink:0;">${matImg(PO_LABEL_IMG_B64)}</div>
         </div>
 
-        <div style="display:flex;align-items:flex-start;margin-bottom:16px;">
+        <div style="display:flex;align-items:flex-start;margin-bottom:14px;">
           <div style="flex:1;"><b>Care Label:</b> Printed label sewn on the inside bottom left seam of the polo with 1 extra UNBRANDED button – same as second sample polo</div>
           <div style="margin-left:14px;flex-shrink:0;">${matImg(PO_CARE_IMG_B64)}</div>
         </div>
 
-        <div style="display:flex;align-items:flex-start;margin-bottom:16px;">
+        <div style="display:flex;align-items:flex-start;margin-bottom:14px;">
           <div style="flex:1;">
             <div><b>Hang Tag:</b></div>
             <div>Hang Tag File: ${lnk(d.hangtaglink,'Link')} (do not use Fenix-branded hang tags)</div>
@@ -1146,16 +1146,16 @@ function po_buildPDFPage(d) {
           <div style="margin-left:14px;flex-shrink:0;">${matImg(PO_HANGTAG_IMG_B64)}</div>
         </div>
 
-        <div style="margin-bottom:16px;"><b>Packaging:</b> Same as second sample polo, except use UNBRANDED plain poly bag (do not use Fenix-branded packaging). Also, please tape the boxes with UNBRANDED tape (do not use Fenix-branded tape).</div>
+        <div style="margin-bottom:14px;"><b>Packaging:</b> Same as second sample polo, except use UNBRANDED plain poly bag (do not use Fenix-branded packaging). Also, please tape the boxes with UNBRANDED tape (do not use Fenix-branded tape).</div>
 
         <div style="margin-top:24px;">
-          <div style="font-weight:bold;text-align:center;margin-bottom:8px;">Billing/Delivery Address</div>
-          <div style="line-height:1.7;">${[d.addr1,d.addr2,d.addr3,d.addr4,d.addr5,d.addr6].filter(Boolean).join('<br>')}</div>
+          <div style="font-weight:bold;font-size:13px;text-align:center;margin-bottom:8px;">Billing/Delivery Address</div>
+          <div style="line-height:1.8;">${[d.addr1,d.addr2,d.addr3,d.addr4,d.addr5,d.addr6].filter(Boolean).join('<br>')}</div>
         </div>
       </div>
 
     </div>
-    <div style="border-top:1px solid #000;text-align:center;font-size:11px;color:#000;padding-top:8px;margin-top:16px;">Matt Bartini | Founder &amp; CEO | Mayor | 339-206-2111 | mayor@mayorclothing.com</div>
+    <div style="border-top:1px solid #aaa;text-align:center;font-size:11px;color:#444;padding-top:10px;margin-top:20px;">Matt Bartini | Founder &amp; CEO | Mayor | 339-206-2111 | mayor@mayorclothing.com</div>
   </div>`;
 }
 
