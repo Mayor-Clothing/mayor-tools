@@ -1041,7 +1041,7 @@ function po_buildPDFPage(d) {
   const hexLnk = (hex) => {
     if (!hex) return '';
     const clean = hex.replace(/\s/g,'').replace(/^#+/,'');
-    return `<a href="https://icolorpalette.com/color/${clean}" style="color:${BLUE};text-decoration:underline;">hex # ${clean}</a>`;
+    return `<a href="https://icolorpalette.com/color/${clean}" style="color:${BLUE};text-decoration:underline;">hex #${clean}</a>`;
   };
 
   const colorToken = (name, hex) => {
@@ -1062,13 +1062,14 @@ function po_buildPDFPage(d) {
 
   const embFileParts = d.embfiles.map(f => {
     const label = f.label || '';
-    return label ? `${label} (${lnk(f.url, f.url)})` : lnk(f.url, f.url);
+    const linkText = label || 'Link';
+    return label ? `${lnk(f.url, linkText)}` : lnk(f.url, linkText);
   }).join(', ');
 
   const tcText = d.threadColors.map(tc => colorToken(tc.name, tc.hex)).join(', ');
 
-  const poloThreadDisplay = d.polothreadcolor.replace(/hex\s*#?\s*([0-9a-fA-F]{3,8})/g, (m,h) => hexLnk(h));
-  const fusingDisplay = `Same color (${d.fusingColor.replace(/hex\s*#?\s*([0-9a-fA-F]{3,8})/g, (m,h) => hexLnk(h))}) and thickness as second sample polo`;
+  const poloThreadDisplay = d.polothreadcolor.replace(/hex\s*#?\s*([0-9a-fA-F]{3,8})/g, (m,h) => `<a href="https://icolorpalette.com/color/${h}" style="color:${BLUE};text-decoration:underline;">hex #${h}</a>`);
+  const fusingDisplay = `Same color (${d.fusingColor.replace(/hex\s*#?\s*([0-9a-fA-F]{3,8})/g, (m,h) => `<a href="https://icolorpalette.com/color/${h}" style="color:${BLUE};text-decoration:underline;">hex #${h}</a>`)}) and thickness as second sample polo`;
 
   const mockupHTML = d.mockupurl
     ? `<div style="text-align:center;margin-top:10px;"><img src="${d.mockupurl}" style="max-width:190px;max-height:190px;" crossorigin="anonymous"></div>` : '';
