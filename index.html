@@ -863,7 +863,7 @@ function po_buildPanelHTML(id, idx) {
         </div>
         <div class="fully-static"><h4>Packaging</h4>Same as second sample polo, except use UNBRANDED plain poly bag (do not use Fenix-branded packaging). Also, please tape the boxes with UNBRANDED tape (do not use Fenix-branded tape).</div>
         <div class="static-editable" id="cw-${id}-address-block">
-          <h4>Billing / Delivery Address</h4>
+          <h4>Billing Address</h4>
           <div class="static-content" id="cw-${id}-address-display">${[po_getStatic(id,'addressLine1'),po_getStatic(id,'addressLine2'),po_getStatic(id,'addressLine3'),po_getStatic(id,'addressLine4'),po_getStatic(id,'addressLine5'),po_getStatic(id,'addressLine6')].filter(Boolean).join('<br>')}</div>
           <div class="edit-bar"><button class="btn-edit" onclick="po_toggleStaticEdit('${id}','address')">✎ Edit</button></div>
           <div class="static-edit-form" id="cw-${id}-address-form">
@@ -874,6 +874,20 @@ function po_buildPanelHTML(id, idx) {
             <label>Line 5 (City, State ZIP)</label><input type="text" id="cw-${id}-addr5" value="${po_getStatic(id,'addressLine5')}">
             <label>Line 6 (Country)</label><input type="text" id="cw-${id}-addr6" value="${po_getStatic(id,'addressLine6')}">
             <div style="margin-top:6px;"><button class="btn-save-edit" onclick="po_saveStaticEdit('${id}','address')">Save</button><button class="btn-cancel-edit" onclick="po_cancelStaticEdit('${id}','address')">Cancel</button></div>
+          </div>
+        </div>
+        <div class="static-editable" id="cw-${id}-shipaddress-block">
+          <h4>Shipping Address</h4>
+          <div class="static-content" id="cw-${id}-shipaddress-display">${[po_getStatic(id,'addressLine1'),po_getStatic(id,'addressLine2'),po_getStatic(id,'addressLine3'),po_getStatic(id,'addressLine4'),po_getStatic(id,'addressLine5'),po_getStatic(id,'addressLine6')].filter(Boolean).join('<br>')}</div>
+          <div class="edit-bar"><button class="btn-edit" onclick="po_toggleStaticEdit('${id}','shipaddress')">✎ Edit</button></div>
+          <div class="static-edit-form" id="cw-${id}-shipaddress-form">
+            <label>Line 1 (Name)</label><input type="text" id="cw-${id}-saddr1" value="${po_getStatic(id,'addressLine1')}">
+            <label>Line 2 (Company)</label><input type="text" id="cw-${id}-saddr2" value="${po_getStatic(id,'addressLine2')}">
+            <label>Line 3 (Street)</label><input type="text" id="cw-${id}-saddr3" value="${po_getStatic(id,'addressLine3')}">
+            <label>Line 4 (Unit)</label><input type="text" id="cw-${id}-saddr4" value="${po_getStatic(id,'addressLine4')}">
+            <label>Line 5 (City, State ZIP)</label><input type="text" id="cw-${id}-saddr5" value="${po_getStatic(id,'addressLine5')}">
+            <label>Line 6 (Country)</label><input type="text" id="cw-${id}-saddr6" value="${po_getStatic(id,'addressLine6')}">
+            <div style="margin-top:6px;"><button class="btn-save-edit" onclick="po_saveStaticEdit('${id}','shipaddress')">Save</button><button class="btn-cancel-edit" onclick="po_cancelStaticEdit('${id}','shipaddress')">Cancel</button></div>
           </div>
         </div>
       </div>
@@ -908,6 +922,9 @@ function po_saveStaticEdit(id, key) {
   } else if (key === 'address') {
     ['1','2','3','4','5','6'].forEach(n => po_setStatic(id, `addressLine${n}`, v(`cw-${id}-addr${n}`)));
     document.getElementById(`cw-${id}-address-display`).innerHTML = ['1','2','3','4','5','6'].map(n => po_getStatic(id,`addressLine${n}`)).filter(Boolean).join('<br>');
+  } else if (key === 'shipaddress') {
+    ['1','2','3','4','5','6'].forEach(n => po_setStatic(id, `shipAddressLine${n}`, v(`cw-${id}-saddr${n}`)));
+    document.getElementById(`cw-${id}-shipaddress-display`).innerHTML = ['1','2','3','4','5','6'].map(n => po_getStatic(id,`shipAddressLine${n}`) || po_getStatic(id,`addressLine${n}`)).filter(Boolean).join('<br>');
   } else if (key === 'embplacement') {
     const val = v(`cw-${id}-embplacement-input`);
     po_setStatic(id, 'embplacement', val);
@@ -1027,6 +1044,12 @@ function po_collectData(id) {
     addr1: po_getStatic(id,'addressLine1'), addr2: po_getStatic(id,'addressLine2'),
     addr3: po_getStatic(id,'addressLine3'), addr4: po_getStatic(id,'addressLine4'),
     addr5: po_getStatic(id,'addressLine5'), addr6: po_getStatic(id,'addressLine6'),
+    saddr1: po_getStatic(id,'shipAddressLine1') || po_getStatic(id,'addressLine1'),
+    saddr2: po_getStatic(id,'shipAddressLine2') || po_getStatic(id,'addressLine2'),
+    saddr3: po_getStatic(id,'shipAddressLine3') || po_getStatic(id,'addressLine3'),
+    saddr4: po_getStatic(id,'shipAddressLine4') || po_getStatic(id,'addressLine4'),
+    saddr5: po_getStatic(id,'shipAddressLine5') || po_getStatic(id,'addressLine5'),
+    saddr6: po_getStatic(id,'shipAddressLine6') || po_getStatic(id,'addressLine6'),
   };
 }
 
@@ -1078,7 +1101,7 @@ function po_buildPDFPage(d) {
   const lh = '1.6';
   const mb = 'margin-bottom:12px;';
 
-  return `<div style="width:1100px;background:white;font-family:${F};font-size:${fs};color:#000;padding:36px 0 28px 52px;line-height:${lh};display:flex;flex-direction:column;">
+  return `<div style="width:1100px;background:white;font-family:${F};font-size:${fs};color:#000;padding:36px 0 28px 36px;line-height:${lh};display:flex;flex-direction:column;">
 
     <!-- TITLE -->
     <div style="text-align:center;font-size:22px;font-weight:bold;margin-bottom:4px;">Mayor – PO #${d.po} – ${d.club}</div>
@@ -1100,20 +1123,20 @@ function po_buildPDFPage(d) {
         <div style="margin-bottom:4px;"><b>Quantity:</b> ${d.qty}</div>
         <div style="margin-left:10px;${mb}line-height:1.5;">${sizeLines}</div>
 
-        <div style="text-align:center;font-weight:bold;font-size:13px;margin:18px 0 12px;">Embroidery</div>
+        <div style="text-align:center;font-weight:bold;font-size:14px;margin:18px 0 12px;">Embroidery</div>
         <div style="${mb}"><b>Embroidery File:</b> ${d.embdesc}${embFileParts ? ' ('+embFileParts+')' : ''}</div>
         <div style="${mb}"><b>Thread Color(s):</b> ${tcText}</div>
         <div style="${mb}"><b>Placement:</b> ${d.embplacement}</div>
         <div style="${mb}"><b>Size:</b> ${d.embsizeh} inches high by ${d.embsizew} inches wide</div>
 
-        <div style="text-align:center;font-weight:bold;font-size:13px;margin:18px 0 10px;">Mockup</div>
+        <div style="text-align:center;font-weight:bold;font-size:14px;margin:18px 0 10px;">Mockup</div>
         ${mockupHTML}
       </div>
 
       <!-- RIGHT COLUMN -->
       <div style="flex:1;min-width:0;padding-left:24px;display:flex;flex-direction:column;">
 
-        <div style="text-align:center;font-weight:bold;font-size:12px;margin-bottom:14px;">Materials</div>
+        <div style="text-align:center;font-weight:bold;font-size:14px;margin-bottom:14px;">Materials</div>
 
         <div style="${mb}"><b>Fabric:</b> Premium polo fabric from Taiwan (92% poly / 8% spandex) – same as second sample polo</div>
         <div style="${mb}"><b>Thread Color:</b> ${poloThreadDisplay}</div>
@@ -1147,8 +1170,26 @@ function po_buildPDFPage(d) {
         <div style="${mb}"><b>Packaging:</b> Same as second sample polo, except use UNBRANDED plain poly bag (do not use Fenix-branded packaging). Also, please tape the boxes with UNBRANDED tape (do not use Fenix-branded tape).</div>
 
         <div style="margin-top:16px;">
-          <div style="font-weight:bold;text-align:center;font-size:12px;margin-bottom:6px;">Billing/Delivery Address</div>
-          <div style="line-height:1.7;">${[d.addr1,d.addr2,d.addr3,d.addr4,d.addr5,d.addr6].filter(Boolean).join('<br>')}</div>
+          <div style="font-weight:bold;text-align:center;font-size:14px;margin-bottom:10px;">Billing / Delivery Address</div>
+          ${(() => {
+            const bill = [d.addr1,d.addr2,d.addr3,d.addr4,d.addr5,d.addr6].filter(Boolean);
+            const ship = [d.saddr1,d.saddr2,d.saddr3,d.saddr4,d.saddr5,d.saddr6].filter(Boolean);
+            const same = bill.join('|') === ship.join('|');
+            if (same) {
+              return `<div style="line-height:1.7;">${bill.join('<br>')}</div>`;
+            } else {
+              return `<div style="display:flex;gap:24px;">
+                <div style="flex:1;">
+                  <div style="font-weight:bold;margin-bottom:4px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#555;">Billing</div>
+                  <div style="line-height:1.7;">${bill.join('<br>')}</div>
+                </div>
+                <div style="flex:1;">
+                  <div style="font-weight:bold;margin-bottom:4px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#555;">Shipping</div>
+                  <div style="line-height:1.7;">${ship.join('<br>')}</div>
+                </div>
+              </div>`;
+            }
+          })()}
         </div>
 
       </div>
