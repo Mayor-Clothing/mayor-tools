@@ -1077,7 +1077,7 @@ function po_buildPDFPage(d) {
   const lh = '1.6';
   const mb = 'margin-bottom:12px;';
 
-  return `<div style="width:1100px;background:white;font-family:${F};font-size:${fs};color:#000;padding:36px 48px 28px 48px;line-height:${lh};display:flex;flex-direction:column;">
+  return `<div style="width:1100px;background:white;font-family:${F};font-size:${fs};color:#000;padding:36px 0 28px 52px;line-height:${lh};display:flex;flex-direction:column;">
 
     <!-- TITLE -->
     <div style="text-align:center;font-size:22px;font-weight:bold;margin-bottom:4px;">Mayor – PO #${d.po} – ${d.club}</div>
@@ -1088,7 +1088,7 @@ function po_buildPDFPage(d) {
     <div style="display:flex;gap:0;flex:1;">
 
       <!-- LEFT COLUMN: order info -->
-      <div style="flex:0 0 380px;padding-left:20px;padding-right:28px;border-right:1px solid #aaa;">
+      <div style="flex:0 0 360px;min-width:0;padding-left:8px;padding-right:24px;border-right:1px solid #aaa;">
 
         <div style="${mb}"><b>${d.datelabel}:</b> ${d.datevalue}</div>
         <div style="${mb}"><b>Pattern:</b> ${lnk(d.patternlink, d.patternlabel)} – same as second sample polo</div>
@@ -1110,7 +1110,7 @@ function po_buildPDFPage(d) {
       </div>
 
       <!-- RIGHT COLUMN -->
-      <div style="flex:1;padding-left:28px;display:flex;flex-direction:column;">
+      <div style="flex:1;min-width:0;padding-left:24px;display:flex;flex-direction:column;">
 
         <div style="text-align:center;font-weight:bold;font-size:12px;margin-bottom:14px;">Materials</div>
 
@@ -1120,27 +1120,27 @@ function po_buildPDFPage(d) {
         <div style="${mb}"><b>Buttons:</b> ${d.buttons}</div>
 
         <div style="display:flex;align-items:flex-start;${mb}">
-          <div style="flex:1;">
+          <div style="flex:1;min-width:0;">
             <div><b>Main Label (including size):</b> Woven</div>
             <div>Label File: ${lnk(d.labellink,'Link')}</div>
             <div>Size: ${d.labelsize}</div>
             <div>Placement: ${d.labelplacement}</div>
           </div>
-          <img src="${PO_LABEL_IMG_B64}" style="width:100px;height:66px;object-fit:cover;border:1px solid #ddd;flex-shrink:0;margin-left:12px;">
+          <img src="${PO_LABEL_IMG_B64}" style="width:80px;height:54px;object-fit:cover;border:1px solid #ddd;flex-shrink:0;margin-left:10px;">
         </div>
 
         <div style="display:flex;align-items:flex-start;${mb}">
-          <div style="flex:1;"><b>Care Label:</b> Printed label sewn on the inside bottom left seam of the polo with 1 extra UNBRANDED button – same as second sample polo</div>
-          <img src="${PO_CARE_IMG_B64}" style="width:100px;height:66px;object-fit:cover;border:1px solid #ddd;flex-shrink:0;margin-left:12px;">
+          <div style="flex:1;min-width:0;"><b>Care Label:</b> Printed label sewn on the inside bottom left seam of the polo with 1 extra UNBRANDED button – same as second sample polo</div>
+          <img src="${PO_CARE_IMG_B64}" style="width:80px;height:54px;object-fit:cover;border:1px solid #ddd;flex-shrink:0;margin-left:10px;">
         </div>
 
         <div style="display:flex;align-items:flex-start;${mb}">
-          <div style="flex:1;">
+          <div style="flex:1;min-width:0;">
             <div><b>Hang Tag:</b></div>
             <div>Hang Tag File: ${lnk(d.hangtaglink,'Link')} (do not use Fenix-branded hang tags)</div>
             <div>Size: ${d.hangtagsize}</div>
           </div>
-          <img src="${PO_HANGTAG_IMG_B64}" style="width:100px;height:66px;object-fit:cover;border:1px solid #ddd;flex-shrink:0;margin-left:12px;">
+          <img src="${PO_HANGTAG_IMG_B64}" style="width:80px;height:54px;object-fit:cover;border:1px solid #ddd;flex-shrink:0;margin-left:10px;">
         </div>
 
         <div style="${mb}"><b>Packaging:</b> Same as second sample polo, except use UNBRANDED plain poly bag (do not use Fenix-branded packaging). Also, please tape the boxes with UNBRANDED tape (do not use Fenix-branded tape).</div>
