@@ -14,23 +14,24 @@
 
   /* ── Top nav ── */
   .top-nav {
-    background: #1a1a18; color: white;
+    background: #fff; color: #1a1a18;
     display: flex; align-items: center; gap: 0;
     position: sticky; top: 0; z-index: 200;
+    border-bottom: 1px solid #e5e5e3;
   }
   .top-nav .logo-area {
-    padding: 12px 20px; border-right: 1px solid #333;
+    padding: 12px 20px; border-right: 1px solid #e5e5e3;
     display: flex; align-items: center;
   }
   .top-nav .logo-area img { height: 28px; display: block; }
   .nav-tab {
     padding: 14px 22px; cursor: pointer; font-size: 13px; font-weight: 500;
-    color: #aaa; border-bottom: 3px solid transparent; transition: color .15s;
+    color: #888; border-bottom: 3px solid transparent; transition: color .15s;
     background: none; border-top: none; border-left: none; border-right: none;
     font-family: inherit; white-space: nowrap;
   }
-  .nav-tab:hover { color: #fff; }
-  .nav-tab.active { color: #fff; border-bottom-color: #fff; }
+  .nav-tab:hover { color: #1a1a18; }
+  .nav-tab.active { color: #1a1a18; border-bottom-color: #1a1a18; }
 
   /* ── Pages ── */
   .page { display: none; }
@@ -187,6 +188,7 @@
   </div>
   <button class="nav-tab active" id="nav-invoice" onclick="switchPage('invoice')">Invoice Generator</button>
   <button class="nav-tab" id="nav-po" onclick="switchPage('po')">PO Generator</button>
+  <button class="nav-tab" id="nav-ps" onclick="switchPage('ps')">Packing Slip</button>
 </nav>
 
 <!-- ══════════════════════════════════════════════
@@ -308,6 +310,58 @@
 </div><!-- end #page-po -->
 
 
+<!-- ══════════════════════════════════════════════
+     PAGE 3 — PACKING SLIP GENERATOR
+═══════════════════════════════════════════════ -->
+<div class="page" id="page-ps">
+  <div class="po-topbar">
+    <span style="font-size:14px;font-weight:600;">Packing Slip Generator</span>
+    <div class="po-topbar-actions">
+      <button class="btn btn-primary" id="ps-download-btn" onclick="ps_generatePDF()">⬇ Download PDF</button>
+    </div>
+  </div>
+  <div class="form-area" id="ps-form-area">
+    <div class="form-grid">
+      <div>
+        <div class="form-section">
+          <h3>Order Info</h3>
+          <div class="field-row"><label>Order Number <span style="color:#aaa;font-weight:400;">(Club/Client + roman numeral, e.g. "Oklahoma City Golf &amp; Country Club I")</span></label>
+            <input type="text" id="ps-ordernumber" placeholder="">
+          </div>
+          <div class="field-row"><label>Club <span style="color:#aaa;font-weight:400;">(optional)</span></label>
+            <input type="text" id="ps-club" placeholder="">
+          </div>
+          <div class="field-row"><label>Box <span style="color:#aaa;font-weight:400;">(optional, e.g. "01/02")</span></label>
+            <input type="text" id="ps-box" placeholder="">
+          </div>
+          <div class="field-row"><label>Date <span style="color:#aaa;font-weight:400;">(optional)</span></label>
+            <input type="text" id="ps-date" placeholder="">
+          </div>
+        </div>
+        <div class="form-section">
+          <h3>Shipping / Billing Address</h3>
+          <div class="field-row">
+            <textarea id="ps-address" rows="5" placeholder="Club Name&#10;Attn: Name&#10;Street&#10;City, State ZIP&#10;Phone" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="form-section">
+          <h3>Products</h3>
+          <div id="ps-products"></div>
+          <button class="btn-add" onclick="ps_addProduct()">+ Add Row</button>
+          <div class="field-row" style="margin-top:14px;">
+            <label>Total <span style="color:#aaa;font-weight:400;">(auto-calculated from descriptions)</span></label>
+            <input type="text" id="ps-total" readonly style="background:#f9f9f8;font-weight:600;border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;width:100%;">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="ps-pdf-container" style="position:absolute;left:-9999px;top:0;"></div>
+</div><!-- end #page-ps -->
+
+
 <script>
 // ══════════════════════════════════════════════
 // PAGE SWITCHING
@@ -315,8 +369,10 @@
 function switchPage(page) {
   document.getElementById('page-invoice').classList.toggle('active', page === 'invoice');
   document.getElementById('page-po').classList.toggle('active', page === 'po');
+  document.getElementById('page-ps').classList.toggle('active', page === 'ps');
   document.getElementById('nav-invoice').classList.toggle('active', page === 'invoice');
   document.getElementById('nav-po').classList.toggle('active', page === 'po');
+  document.getElementById('nav-ps').classList.toggle('active', page === 'ps');
 }
 
 
@@ -1276,6 +1332,191 @@ async function po_generateAllPDFs() {
 
 // Init PO generator
 po_addColorway();
+
+
+// ══════════════════════════════════════════════
+// PACKING SLIP GENERATOR
+// ══════════════════════════════════════════════
+let ps_rowCounter = 0;
+const PS_SIZES = ['XS','S','M','L','XL','XXL','3XL'];
+
+function ps_addProduct() {
+  ps_rowCounter++;
+  const rowId = ps_rowCounter;
+  const container = document.getElementById('ps-products');
+  const row = document.createElement('div');
+  row.className = 'item-block';
+  row.id = `ps-row-${rowId}`;
+
+  const sizeInputs = PS_SIZES.map(s => `
+    <div class="size-field">
+      <label>${s}</label>
+      <input type="number" id="ps-size-${rowId}-${s}" placeholder="0" min="0" step="1" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:7px 6px;font-size:13px;font-family:inherit;text-align:center;" oninput="ps_updateTotal()">
+    </div>`).join('');
+
+  row.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <p class="item-label" style="margin:0;">Product ${rowId}</p>
+      <button class="btn-remove" onclick="document.getElementById('ps-row-${rowId}').remove(); ps_updateTotal();">×</button>
+    </div>
+    <div class="field-row"><label>Product</label>
+      <input type="text" id="ps-product-${rowId}" placeholder="Men's Custom Print Polos">
+    </div>
+    <div class="field-row"><label>Color / Print <span style="color:#aaa;font-weight:400;">(e.g. "Thunder Blue / Chain")</span></label>
+      <input type="text" id="ps-colorprint-${rowId}" placeholder="">
+    </div>
+    <div class="field-row"><label>Sizes</label>
+      <div class="sizes-grid">${sizeInputs}</div>
+    </div>
+  `;
+  container.appendChild(row);
+  ps_updateTotal();
+}
+
+function ps_updateTotal() {
+  let total = 0;
+  document.querySelectorAll('#ps-products [id^="ps-row-"]').forEach(row => {
+    const id = row.id.replace('ps-row-', '');
+    PS_SIZES.forEach(s => {
+      const el = document.getElementById(`ps-size-${id}-${s}`);
+      const v = el ? parseInt(el.value, 10) : 0;
+      if (!isNaN(v) && v > 0) total += v;
+    });
+  });
+  document.getElementById('ps-total').value = total > 0 ? total : '';
+}
+
+// Build the "Color / Print - S: 2 - M: 8..." description string for a row
+function ps_buildDescription(rowId) {
+  const colorprint = document.getElementById(`ps-colorprint-${rowId}`).value.trim();
+  const sizeParts = [];
+  PS_SIZES.forEach(s => {
+    const el = document.getElementById(`ps-size-${rowId}-${s}`);
+    const v = el ? el.value.trim() : '';
+    if (v && v !== '0') sizeParts.push(`${s}: ${v}`);
+  });
+  const sizeStr = sizeParts.join(' - ');
+  if (colorprint && sizeStr) return `${colorprint} – ${sizeStr}`;
+  if (colorprint) return colorprint;
+  return sizeStr;
+}
+
+function ps_buildPDF() {
+  const F = 'Arial, Helvetica, sans-serif';
+
+  const ordernumber = document.getElementById('ps-ordernumber').value.trim();
+  const club = document.getElementById('ps-club').value.trim();
+  const box = document.getElementById('ps-box').value.trim();
+  const date = document.getElementById('ps-date').value.trim();
+  const address = document.getElementById('ps-address').value.trim();
+  const total = document.getElementById('ps-total').value.trim();
+
+  const rows = [];
+  document.querySelectorAll('#ps-products [id^="ps-row-"]').forEach(row => {
+    const id = row.id.replace('ps-row-', '');
+    const product = document.getElementById(`ps-product-${id}`).value.trim();
+    const desc = ps_buildDescription(id);
+    if (product || desc) rows.push({ product, desc });
+  });
+
+  const productRows = rows.map(r => `
+    <tr>
+      <td style="padding:8px 16px;text-align:center;border:none;">${r.product}</td>
+      <td style="padding:8px 16px;text-align:center;border:none;">${r.desc}</td>
+    </tr>`).join('');
+
+  const addrLines = address.split('\n').filter(Boolean);
+  const addrHTML = addrLines.map(l => `<div>${l}</div>`).join('');
+
+  return `<div style="width:1100px;background:white;font-family:${F};font-size:12px;color:#000;padding:36px 0 28px 56px;line-height:1.6;">
+
+    <!-- HEADER -->
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;padding-right:56px;">
+      <div style="width:80px;"></div>
+      <div style="text-align:center;font-size:26px;flex:1;">Packing Slip</div>
+      <div style="font-size:18px;width:80px;text-align:right;">Mayor</div>
+    </div>
+    <hr style="border:none;border-top:1px solid #aaa;margin-bottom:24px;">
+
+    <div style="display:flex;gap:0;">
+      <!-- LEFT COLUMN -->
+      <div style="flex:0 0 380px;padding-right:24px;border-right:1px solid #aaa;">
+        <div style="margin-bottom:12px;"><b>Order Number</b>: ${ordernumber}</div>
+        ${club ? `<div style="margin-bottom:12px;"><b>Club</b>: ${club}</div>` : ''}
+        ${box ? `<div style="margin-bottom:12px;"><b>Box</b>: ${box}</div>` : ''}
+        ${date ? `<div style="margin-bottom:12px;"><b>Date</b>: ${date}</div>` : ''}
+        <div style="margin-bottom:6px;"><b>Shipping / Billing Address:</b></div>
+        <div style="line-height:1.6;">${addrHTML}</div>
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div style="flex:1;padding-left:24px;">
+        <table style="width:100%;border-collapse:collapse;border:1px solid #000;">
+          <thead>
+            <tr style="background:#000;color:#fff;">
+              <th style="padding:8px 16px;font-weight:bold;text-align:center;border:none;">Product</th>
+              <th style="padding:8px 16px;font-weight:bold;text-align:center;border:none;">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${productRows}
+            <tr>
+              <td style="padding:8px 16px;text-align:center;border:none;border-top:1px solid #000;">Total</td>
+              <td style="padding:8px 16px;text-align:center;border:none;border-top:1px solid #000;">${total}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="border-top:1px solid #aaa;text-align:center;font-size:11px;color:#444;padding-top:10px;margin-top:24px;">Mayor | 870 Inman Village Parkway NE, Suite 533, Atlanta, GA 30307 | 339-206-2111 | mayor@mayorclothing.com</div>
+  </div>`;
+}
+
+async function ps_generatePDF() {
+  const btn = document.getElementById('ps-download-btn');
+  btn.textContent = 'Generating...';
+  btn.disabled = true;
+  try {
+    const { jsPDF } = window.jspdf;
+    const container = document.getElementById('ps-pdf-container');
+    container.innerHTML = '';
+
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:absolute;left:0;top:0;';
+    wrapper.innerHTML = ps_buildPDF();
+    container.appendChild(wrapper);
+
+    await new Promise(r => setTimeout(r, 300));
+
+    const pageEl = wrapper.querySelector('div');
+    const canvas = await html2canvas(pageEl, {
+      scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false,
+    });
+
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'letter' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
+    const dw = canvas.width * ratio;
+    const dh = canvas.height * ratio;
+    pdf.addImage(imgData, 'JPEG', (pageW-dw)/2, (pageH-dh)/2, dw, dh);
+
+    container.innerHTML = '';
+
+    const ordernumber = document.getElementById('ps-ordernumber').value.trim() || 'Order';
+    pdf.save(`Mayor_Packing_Slip_${ordernumber.replace(/[^a-z0-9]/gi,'_')}.pdf`);
+  } catch(err) {
+    console.error(err);
+    alert('PDF generation failed: ' + err.message);
+  }
+  btn.textContent = '⬇ Download PDF';
+  btn.disabled = false;
+}
+
+// Init Packing Slip with one product row
+ps_addProduct();
 </script>
 </body>
 </html>
