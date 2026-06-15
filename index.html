@@ -543,7 +543,7 @@ function addItem() {
   div.id = 'item-block-' + n;
   div.innerHTML = `
     <p class="item-label">Item ${n}</p>
-    <div class="field"><label>Image URL</label><input id="url_${n}" placeholder="https://mayorclothing.com/cdn/shop/files/..." /></div>
+    <div class="field"><label>Image URL <span style="color:#aaa;font-weight:400;">(or type a product name like "Women's Custom Print Polo (with sleeves)" with no image)</span></label><input id="url_${n}" placeholder="https://mayorclothing.com/cdn/shop/files/... or product name" /></div>
     <div class="field"><label>Description (verbatim)</label><textarea id="desc_${n}" rows="4"></textarea></div>
     <div class="field"><label>Sizes (e.g. S: 2 - M: 8 - L: 10)</label><input id="sizes_${n}" placeholder="S: 2 - M: 8 - L: 10" oninput="autoQtyFromSizes(${n})" /></div>
     <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px;">
@@ -645,9 +645,11 @@ async function generate() {
     const sizesVal = val('sizes_' + i);
     if (!qty && !desc) continue;
     const fullDesc = sizesVal ? desc + (desc ? '\n' : '') + sizesVal : desc;
+    const urlVal = val('url_' + i);
+    const isUrl = /^https?:\/\//i.test(urlVal);
     lineItems.push({
-      product: 'Custom Print Polo',
-      url: val('url_' + i),
+      product: isUrl ? 'Custom Print Polo' : (urlVal || 'Custom Print Polo'),
+      url: isUrl ? urlVal : '',
       description: fullDesc,
       quantity: qty,
       orig_price: num('orig_price_' + i) || null,
