@@ -38,8 +38,8 @@
   .page.active { display: block; }
 
   /* ── Invoice generator styles (verbatim from original) ── */
-  #page-invoice { padding: 2rem 1rem; }
-  #page-invoice .container { max-width: 600px; margin: 0 auto; }
+  #page-invoice { padding: 0; }
+  #page-invoice .container { max-width: 600px; margin: 0 auto; padding: 2rem 1rem; }
   #page-invoice .card { background: #fff; border: 1px solid #e5e5e3; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
   #page-invoice .section-title { font-size: 11px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
   #page-invoice .field { margin-bottom: 10px; }
@@ -75,7 +75,7 @@
   #page-invoice .parse-info { font-size: 11px; color: #3b6d11; margin-top: 6px; display: none; }
 
   /* ── PO generator styles ── */
-  #page-po .po-topbar, #page-ps .po-topbar {
+  #page-po .po-topbar, #page-ps .po-topbar, #page-invoice .po-topbar {
     background: #1a1a18; color: white; padding: 12px 24px;
     display: flex; align-items: center; justify-content: space-between;
   }
@@ -195,6 +195,9 @@
      PAGE 1 — INVOICE GENERATOR (untouched)
 ═══════════════════════════════════════════════ -->
 <div class="page active" id="page-invoice">
+<div class="po-topbar">
+  <span style="font-size:14px;font-weight:600;">Order Confirmation &amp; Invoice Generator</span>
+</div>
 <div class="container">
 
   <!-- PASTE FROM HUBSPOT -->
@@ -225,16 +228,29 @@
       <div class="field"><label>Club</label><input id="club" /></div>
     </div>
     <div class="field">
-      <label>Shipping / Billing Address</label>
-      <textarea id="address" rows="3" placeholder="Club Name&#10;Attn: Name&#10;Street&#10;City, State ZIP&#10;Phone"></textarea>
+      <label>Billing Address <span style="color:#aaa;font-weight:400;">(used as Shipping/Billing if shipping is blank or identical)</span></label>
+      <textarea id="billing_address" rows="3" placeholder="Club Name&#10;Attn: Name&#10;Street&#10;City, State ZIP&#10;Phone"></textarea>
+    </div>
+    <div class="field">
+      <label>Shipping Address <span style="color:#aaa;font-weight:400;">(optional — leave blank if same as billing)</span></label>
+      <textarea id="shipping_address" rows="3" placeholder="Leave blank if same as billing address"></textarea>
     </div>
     <div class="row2">
-      <div class="field"><label>Ship Date</label><input id="ship_date" placeholder="Friday, May 29, 2026" /></div>
+      <div class="field">
+        <label id="ship_date_label" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>Ship Date</span>
+          <span style="display:flex;align-items:center;gap:4px;font-weight:400;">
+            <button type="button" id="btn-shipdate" onclick="setDateLabel('Ship Date')" style="font-size:10px; padding:2px 8px; border-radius:6px; border:1px solid #1a1a18; background:#1a1a18; color:white; cursor:pointer; font-family:inherit;">Ship</button>
+            <button type="button" id="btn-deliverydate" onclick="setDateLabel('Delivery Date')" style="font-size:10px; padding:2px 8px; border-radius:6px; border:1px solid #ccc; background:white; color:#1a1a18; cursor:pointer; font-family:inherit;">Delivery</button>
+          </span>
+        </label>
+        <input id="ship_date" placeholder="Friday, May 29, 2026" />
+      </div>
       <div class="field"><label>Payment Link (Nickel)</label><input id="payment_link" placeholder="https://nickel.com/pay/..." /></div>
     </div>
     <div class="field">
-      <label>Customer Email</label>
-      <input id="customer_email" type="email" placeholder="timfleming@okccgc.com" />
+      <label>Customer Email(s) <span style="color:#aaa;font-weight:400;">(separate multiple with comma — each gets their own portal login)</span></label>
+      <input id="customer_email" type="text" placeholder="timfleming@okccgc.com, sandi@okccgc.com" />
     </div>
     <div class="field">
       <label>Product Page URL</label>
@@ -282,7 +298,10 @@
     <p class="section-title">Totals</p>
     <div class="row3">
       <div class="field"><label>Shipping</label><input id="shipping" type="number" step="0.01" placeholder="0.00" oninput="calcTotals()" /></div>
+      <div class="field"><label>Sample Reimbursement (credit)</label><input id="sample_reimbursement" type="number" step="0.01" placeholder="0.00" oninput="calcTotals()" /></div>
       <div class="field"><label>Subtotal (auto)</label><input id="subtotal" type="number" step="0.01" readonly /></div>
+    </div>
+    <div class="row3">
       <div class="field"><label>Total (auto)</label><input id="total" type="number" step="0.01" readonly /></div>
     </div>
   </div>
@@ -411,20 +430,28 @@ function parseHubspot() {
   const orderNum = get('a. Order');
   const club     = get('b. Club');
   const address  = get('c. Shipping');
+  const billingAddress = get('c_billing_address') || get('c. Billing');
   const shipDate = get('d. Shipping');
   const payLink  = get('y. Payment');
 
   if (orderNum) document.getElementById('order_number').value = orderNum;
   if (club)     document.getElementById('club').value = club;
 
+  const formatAddr = (addr) => addr
+    .replace(/([a-z])([A-Z])/g, '$1\n$2')
+    .replace(/([a-zA-Z])(\d{3,})/g, '$1\n$2')
+    .replace(/(\d{5})\s*\(/g, '$1\n(')
+    .replace(/\s+([a-zA-Z0-9._%+\-]+@)/g, '\n$1')
+    .replace(/\n+/g, '\n').trim();
+
   if (address && address !== '--') {
-    let addrFormatted = address
-      .replace(/([a-z])([A-Z])/g, '$1\n$2')
-      .replace(/([a-zA-Z])(\d{3,})/g, '$1\n$2')
-      .replace(/(\d{5})\s*\(/g, '$1\n(')
-      .replace(/\s+([a-zA-Z0-9._%+\-]+@)/g, '\n$1')
-      .replace(/\n+/g, '\n').trim();
-    document.getElementById('address').value = addrFormatted;
+    document.getElementById('billing_address').value = formatAddr(address);
+  }
+  if (billingAddress && billingAddress !== '--' && billingAddress.trim() !== address.trim()) {
+    // c_billing_address present and differs from shipping -> shipping address is the "address" field,
+    // billing address is the c_billing_address field
+    document.getElementById('billing_address').value = formatAddr(billingAddress);
+    document.getElementById('shipping_address').value = formatAddr(address);
   }
 
   if (shipDate && shipDate !== '--') document.getElementById('ship_date').value = shipDate;
@@ -446,7 +473,10 @@ function parseHubspot() {
   }
 
   const customerEmail = get('customer_email') || get('customer email');
-  if (customerEmail && customerEmail !== '--') document.getElementById('customer_email').value = customerEmail;
+  if (customerEmail && customerEmail !== '--') {
+    const emails = customerEmail.split(/[\n;,]+/).map(e => e.trim()).filter(Boolean);
+    document.getElementById('customer_email').value = emails.join(', ');
+  }
 
   const embroideryVal = get('za. Embroidery');
   if (embroideryVal && embroideryVal !== '--') {
@@ -458,6 +488,12 @@ function parseHubspot() {
   if (artVal && artVal !== '--') {
     const av = parseFloat(artVal.replace(/[^0-9.]/g,'')) || 0;
     if (av > 0) document.getElementById('art_setup').value = av;
+  }
+
+  const reimbursementVal = get('z_sample_reimbursement') || get('Sample Reimbursement');
+  if (reimbursementVal && reimbursementVal !== '--') {
+    const rv = parseFloat(reimbursementVal.replace(/[^0-9.]/g,'')) || 0;
+    if (rv > 0) document.getElementById('sample_reimbursement').value = rv;
   }
 
   let numItems = 0;
@@ -475,6 +511,7 @@ function parseHubspot() {
     if (descs[i]  && descs[i]  !== '--') document.getElementById('desc_'  + n).value = descs[i].replace(/ \/ /g, '\n');
     if (sizes[i]  && sizes[i]  !== '--') document.getElementById('sizes_' + n).value = sizes[i];
     if (qtys[i] > 0)   document.getElementById('qty_' + n).value = qtys[i];
+    else if (sizes[i] && sizes[i] !== '--') autoQtyFromSizes(n);
     if (prices[i] === 0 && qtys[i] > 0) {
       let matchPrice = 0;
       for (let j = 0; j < i; j++) {
@@ -508,7 +545,7 @@ function addItem() {
     <p class="item-label">Item ${n}</p>
     <div class="field"><label>Image URL</label><input id="url_${n}" placeholder="https://mayorclothing.com/cdn/shop/files/..." /></div>
     <div class="field"><label>Description (verbatim)</label><textarea id="desc_${n}" rows="4"></textarea></div>
-    <div class="field"><label>Sizes (e.g. S: 2 - M: 8 - L: 10)</label><input id="sizes_${n}" placeholder="S: 2 - M: 8 - L: 10" /></div>
+    <div class="field"><label>Sizes (e.g. S: 2 - M: 8 - L: 10)</label><input id="sizes_${n}" placeholder="S: 2 - M: 8 - L: 10" oninput="autoQtyFromSizes(${n})" /></div>
     <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px;">
       <div class="field"><label>Qty</label><input id="qty_${n}" type="number" placeholder="24" oninput="calcItem(${n})" /></div>
       <div class="field"><label>Original Price (struck)</label><input id="orig_price_${n}" type="number" step="0.01" placeholder="optional" /></div>
@@ -525,6 +562,19 @@ function removeItem() {
   itemCount--;
   document.getElementById('btn-remove').style.display = itemCount > 1 ? '' : 'none';
   calcTotals();
+}
+
+function autoQtyFromSizes(n) {
+  const sizesVal = document.getElementById('sizes_' + n).value;
+  const matches = sizesVal.match(/:\s*(\d+)/g);
+  if (!matches) return;
+  let total = 0;
+  matches.forEach(m => {
+    const num = parseInt(m.replace(/[^\d]/g, ''), 10);
+    if (!isNaN(num)) total += num;
+  });
+  document.getElementById('qty_' + n).value = total > 0 ? total : '';
+  calcItem(n);
 }
 
 function calcItem(n) {
@@ -545,13 +595,29 @@ function calcTotals() {
   document.getElementById('total-price-display').textContent = '$' + totalAmt.toFixed(2);
   document.getElementById('subtotal').value = totalAmt > 0 ? totalAmt.toFixed(2) : '';
   const shipping = parseFloat(document.getElementById('shipping').value) || 0;
-  const grandTotal = totalAmt + shipping;
-  document.getElementById('total').value = grandTotal > 0 ? grandTotal.toFixed(2) : '';
+  const reimbursement = parseFloat(document.getElementById('sample_reimbursement').value) || 0;
+  const grandTotal = totalAmt + shipping - reimbursement;
+  document.getElementById('total').value = grandTotal !== 0 ? grandTotal.toFixed(2) : '';
 }
 
 function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
 function num(id) { const el = document.getElementById(id); return parseFloat(el?.value) || 0; }
 function checked(id) { const el = document.getElementById(id); return el ? el.checked : false; }
+
+let dateLabel = 'Ship Date';
+function setDateLabel(label) {
+  dateLabel = label;
+  const shipBtn = document.getElementById('btn-shipdate');
+  const delBtn = document.getElementById('btn-deliverydate');
+  const isShip = label === 'Ship Date';
+  shipBtn.style.background = isShip ? '#1a1a18' : 'white';
+  shipBtn.style.color = isShip ? 'white' : '#1a1a18';
+  shipBtn.style.borderColor = isShip ? '#1a1a18' : '#ccc';
+  delBtn.style.background = !isShip ? '#1a1a18' : 'white';
+  delBtn.style.color = !isShip ? 'white' : '#1a1a18';
+  delBtn.style.borderColor = !isShip ? '#1a1a18' : '#ccc';
+  document.querySelector('#ship_date_label span:first-child').textContent = label;
+}
 
 let docType = 'confirmation';
 function setDocType(type) {
@@ -570,7 +636,7 @@ async function generate() {
   const status = document.getElementById('status');
   btn.disabled = true;
   status.className = 'status loading';
-  status.textContent = 'Generating invoice…';
+  status.textContent = docType === 'confirmation' ? 'Generating order confirmation…' : 'Generating invoice…';
 
   const lineItems = [];
   for (let i = 1; i <= itemCount; i++) {
@@ -590,13 +656,18 @@ async function generate() {
     });
   }
 
+  const reimbursement = num('sample_reimbursement');
+
   const payload = {
     type:           docType,
     order_number:   val('order_number'),
     club:           val('club'),
-    address:        val('address'),
+    address:        val('billing_address'),
+    shipping_address: val('shipping_address'),
     ship_date:      val('ship_date'),
+    date_label:     dateLabel,
     customer_email: val('customer_email'),
+    customer_emails: val('customer_email').split(/[\n;,]+/).map(e => e.trim()).filter(Boolean),
     product_page:   val('product_page'),
     payment_link:   val('payment_link'),
     line_items:     lineItems,
@@ -606,6 +677,7 @@ async function generate() {
     art_setup:      num('art_setup') || null,
     strike_art:     checked('strike_art'),
     shipping:       num('shipping'),
+    sample_reimbursement: reimbursement > 0 ? `(${reimbursement.toFixed(2)})` : null,
     total:          num('total')
   };
 
@@ -623,7 +695,7 @@ async function generate() {
     a.download = `Mayor-${docType === 'confirmation' ? 'Order-Confirmation' : 'Invoice'}-${payload.order_number || 'draft'}.pdf`;
     a.click();
     status.className = 'status success';
-    status.textContent = '✓ Invoice downloaded!';
+    status.textContent = docType === 'confirmation' ? '✓ Order Confirmation downloaded!' : '✓ Invoice downloaded!';
   } catch(e) {
     status.className = 'status error';
     status.textContent = 'Error: ' + e.message;
