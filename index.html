@@ -246,7 +246,11 @@
         </label>
         <input id="ship_date" placeholder="Friday, May 29, 2026" />
       </div>
-      <div class="field"><label>Payment Link (Nickel)</label><input id="payment_link" placeholder="https://nickel.com/pay/..." /></div>
+      <div class="field"><label>Payment Link (Nickel) <span style="color:#aaa;font-weight:400;">(label becomes "50% Deposit" if a second link is added)</span></label><input id="payment_link" placeholder="https://nickel.com/pay/..." /></div>
+    </div>
+    <div class="field">
+      <label>Second Payment Link <span style="color:#aaa;font-weight:400;">(optional \u2014 for 50% deposit / 50% on receipt orders, labeled "50% on Receipt")</span></label>
+      <input id="payment_link_2" placeholder="https://nickel.com/pay/... (leave blank for single payment)" />
     </div>
     <div class="field">
       <label>Customer Email(s) <span style="color:#aaa;font-weight:400;">(separate multiple with comma — each gets their own portal login)</span></label>
@@ -672,6 +676,7 @@ async function generate() {
     customer_emails: val('customer_email').split(/[\n;,]+/).map(e => e.trim()).filter(Boolean),
     product_page:   val('product_page'),
     payment_link:   val('payment_link'),
+    payment_link_2: val('payment_link_2'),
     line_items:     lineItems,
     subtotal:       num('subtotal'),
     embroidery:     num('embroidery') || null,
