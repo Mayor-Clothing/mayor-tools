@@ -1360,7 +1360,7 @@ function ps_addProduct() {
       <button class="btn-remove" onclick="document.getElementById('ps-row-${rowId}').remove(); ps_updateTotal();">×</button>
     </div>
     <div class="field-row"><label>Product</label>
-      <input type="text" id="ps-product-${rowId}" placeholder="Men's Custom Print Polos">
+      <input type="text" id="ps-product-${rowId}" value="Men's Custom Print Polo" placeholder="Men's Custom Print Polo">
     </div>
     <div class="field-row"><label>Color / Print <span style="color:#aaa;font-weight:400;">(e.g. "Thunder Blue / Chain")</span></label>
       <input type="text" id="ps-colorprint-${rowId}" placeholder="">
@@ -1396,7 +1396,7 @@ function ps_buildDescription(rowId) {
     if (v && v !== '0') sizeParts.push(`${s}: ${v}`);
   });
   const sizeStr = sizeParts.join(' - ');
-  if (colorprint && sizeStr) return `${colorprint} – ${sizeStr}`;
+  if (colorprint && sizeStr) return `${colorprint}\n${sizeStr}`;
   if (colorprint) return colorprint;
   return sizeStr;
 }
@@ -1509,7 +1509,10 @@ async function ps_generatePDF() {
     rows.forEach((r, i) => {
       doc.setFont('times', 'normal');
       doc.setFontSize(8.5);
-      const descLines = doc.splitTextToSize(r.desc, dW - 8);
+      const descLines = [];
+      r.desc.split('\n').forEach(part => {
+        doc.splitTextToSize(part, dW - 8).forEach(line => descLines.push(line));
+      });
       const rowH = Math.max(26, descLines.length * 11 + 8);
 
       if (i % 2 === 1) {
