@@ -1402,7 +1402,7 @@ function ps_buildDescription(rowId) {
 }
 
 function ps_buildPDF() {
-  const F = '"Times New Roman", Times, serif';
+  const F = 'Georgia, "Times New Roman", Times, serif';
 
   // Match PDFKit invoice: 612x792pt page, rendered at 2x for crispness = 1224x1584px
   const SCALE = 2;
@@ -1438,9 +1438,12 @@ function ps_buildPDF() {
   const addrLines = address.split('\n').filter(Boolean);
   const addrHTML = addrLines.map(l => `<div style="font-size:${9*SCALE}px;margin-bottom:${2*SCALE}px;">${l}</div>`).join('');
 
-  // Letter-spaced title like "O r d e r  C o n f i r m a t i o n" — natural single-space join,
-  // letter-spacing CSS handles the visual gap (matches PDFKit characterSpacing behavior)
-  const spacedTitle = 'Packing Slip'.split('').join(' ');
+  // Letter-spaced title like "O r d e r   C o n f i r m a t i o n" — each word's letters
+  // get single-space gaps (handled by letter-spacing), with extra non-breaking spaces
+  // between words so the word gap doesn't collapse and reads as a wider break.
+  const spacedTitle = 'Packing Slip'.split(' ')
+    .map(word => word.split('').join(' '))
+    .join('&nbsp;&nbsp;&nbsp;');
 
   // Logo aspect ratio ~587:200 (2.935:1). Match PDFKit's width:88pt with proportional height.
   const LOGO_W = 88 * SCALE;
@@ -1449,7 +1452,7 @@ function ps_buildPDF() {
   return `<div style="width:${PAGE_W}px;height:${PAGE_H}px;background:white;font-family:${F};color:#1a1a18;box-sizing:border-box;position:relative;overflow:hidden;">
 
     <!-- TITLE -->
-    <div style="position:absolute;top:${MARGIN}px;left:${MARGIN}px;width:${CONTENT_W}px;text-align:center;font-size:${16*SCALE}px;letter-spacing:${3*SCALE}px;white-space:nowrap;">${spacedTitle}</div>
+    <div style="position:absolute;top:${MARGIN}px;left:${MARGIN}px;width:${CONTENT_W}px;text-align:center;font-size:${16*SCALE}px;letter-spacing:${3*SCALE}px;white-space:nowrap;font-family:${F};">${spacedTitle}</div>
 
     <!-- LOGO -->
     <img src="Mayor_Logo_transparent.png" alt="" crossorigin="anonymous" style="position:absolute;top:${(MARGIN - 6*SCALE)}px;right:${MARGIN}px;width:${LOGO_W}px;height:${LOGO_H}px;object-fit:contain;display:block;">
@@ -1458,7 +1461,7 @@ function ps_buildPDF() {
     <div style="position:absolute;top:${(MARGIN + 30*SCALE)}px;left:${MARGIN}px;width:${CONTENT_W}px;border-top:${0.75*SCALE}px solid #000;"></div>
 
     <!-- LEFT COLUMN -->
-    <div style="position:absolute;top:${(MARGIN + 42*SCALE)}px;left:${MARGIN}px;width:${LEFT_W}px;font-size:${9.5*SCALE}px;line-height:1.4;">
+    <div style="position:absolute;top:${(MARGIN + 42*SCALE)}px;left:${MARGIN}px;width:${LEFT_W}px;font-size:${9.5*SCALE}px;line-height:1.4;font-family:${F};">
       <div style="margin-bottom:${6*SCALE}px;"><b>Order Number</b>: ${ordernumber}</div>
       ${club ? `<div style="margin-bottom:${6*SCALE}px;"><b>Club</b>: ${club}</div>` : ''}
       ${box ? `<div style="margin-bottom:${6*SCALE}px;"><b>Box</b>: ${box}</div>` : ''}
@@ -1469,7 +1472,7 @@ function ps_buildPDF() {
 
     <!-- RIGHT COLUMN: TABLE -->
     <div style="position:absolute;top:${(MARGIN + 42*SCALE)}px;left:${RIGHT_X}px;width:${RIGHT_W}px;">
-      <table style="width:100%;border-collapse:collapse;">
+      <table style="width:100%;border-collapse:collapse;font-family:${F};">
         <thead>
           <tr style="background:#1a1a18;color:#fff;">
             <th style="padding:${5*SCALE}px ${8*SCALE}px;font-weight:bold;text-align:left;font-size:${8.5*SCALE}px;">Product</th>
@@ -1488,7 +1491,7 @@ function ps_buildPDF() {
 
     <!-- FOOTER -->
     <div style="position:absolute;bottom:${38*SCALE}px;left:${MARGIN}px;width:${CONTENT_W}px;border-top:${0.75*SCALE}px solid #000;"></div>
-    <div style="position:absolute;bottom:${27*SCALE}px;left:${MARGIN}px;width:${CONTENT_W}px;text-align:center;font-size:${7*SCALE}px;font-weight:bold;letter-spacing:${0.5*SCALE}px;">Mayor | 870 Inman Village Parkway NE, Suite 533, Atlanta, GA 30307 | 339-206-2111 | mayor@mayorclothing.com</div>
+    <div style="position:absolute;bottom:${27*SCALE}px;left:${MARGIN}px;width:${CONTENT_W}px;text-align:center;font-size:${7*SCALE}px;font-weight:bold;letter-spacing:${0.5*SCALE}px;font-family:${F};">Mayor | 870 Inman Village Parkway NE, Suite 533, Atlanta, GA 30307 | 339-206-2111 | mayor@mayorclothing.com</div>
   </div>`;
 }
 
