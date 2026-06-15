@@ -75,80 +75,80 @@
   #page-invoice .parse-info { font-size: 11px; color: #3b6d11; margin-top: 6px; display: none; }
 
   /* ── PO generator styles ── */
-  #page-po .po-topbar {
+  #page-po .po-topbar, #page-ps .po-topbar {
     background: #1a1a18; color: white; padding: 12px 24px;
     display: flex; align-items: center; justify-content: space-between;
   }
-  #page-po .po-topbar-actions { display: flex; gap: 8px; }
-  #page-po .btn { padding: 9px 18px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; font-family: inherit; transition: background .15s; }
-  #page-po .btn-primary { background: white; color: #1a1a18; }
-  #page-po .btn-primary:hover { background: #e5e5e3; }
-  #page-po .btn-primary:disabled { opacity: .5; cursor: default; }
-  #page-po .btn-secondary { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); }
-  #page-po .btn-secondary:hover { background: rgba(255,255,255,0.25); }
-  #page-po .btn-red { background: white; color: #a32d2d; border: 1px solid #ddd; font-size: 12px; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-family: inherit; }
-  #page-po .btn-red:hover { background: #fcebeb; }
-  #page-po .btn-add { background: none; border: none; color: #999; font-size: 12px; padding: 4px 0; cursor: pointer; font-family: inherit; text-decoration: underline; }
-  #page-po .btn-add:hover { color: #1a1a18; }
-  #page-po .btn-remove { background: none; border: none; color: #ccc; cursor: pointer; font-size: 16px; line-height: 1; padding: 0 4px; }
-  #page-po .btn-remove:hover { color: #a32d2d; }
+  #page-po .po-topbar-actions, #page-ps .po-topbar-actions { display: flex; gap: 8px; }
+  #page-po .btn, #page-ps .btn { padding: 9px 18px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; font-family: inherit; transition: background .15s; }
+  #page-po .btn-primary, #page-ps .btn-primary { background: white; color: #1a1a18; }
+  #page-po .btn-primary:hover, #page-ps .btn-primary:hover { background: #e5e5e3; }
+  #page-po .btn-primary:disabled, #page-ps .btn-primary:disabled { opacity: .5; cursor: default; }
+  #page-po .btn-secondary, #page-ps .btn-secondary { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); }
+  #page-po .btn-secondary:hover, #page-ps .btn-secondary:hover { background: rgba(255,255,255,0.25); }
+  #page-po .btn-red, #page-ps .btn-red { background: white; color: #a32d2d; border: 1px solid #ddd; font-size: 12px; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-family: inherit; }
+  #page-po .btn-red:hover, #page-ps .btn-red:hover { background: #fcebeb; }
+  #page-po .btn-add, #page-ps .btn-add { background: none; border: none; color: #999; font-size: 12px; padding: 4px 0; cursor: pointer; font-family: inherit; text-decoration: underline; }
+  #page-po .btn-add:hover, #page-ps .btn-add:hover { color: #1a1a18; }
+  #page-po .btn-remove, #page-ps .btn-remove { background: none; border: none; color: #ccc; cursor: pointer; font-size: 16px; line-height: 1; padding: 0 4px; }
+  #page-po .btn-remove:hover, #page-ps .btn-remove:hover { color: #a32d2d; }
 
-  #page-po .po-tabs-row { background: #fff; border-bottom: 1px solid #e5e5e3; padding: 0 24px; display: flex; align-items: center; overflow-x: auto; }
-  #page-po .po-tab { padding: 11px 18px; cursor: pointer; border-bottom: 2px solid transparent; font-size: 13px; font-weight: 400; color: #999; white-space: nowrap; margin-bottom: -1px; }
-  #page-po .po-tab.active { border-bottom-color: #1a1a18; color: #1a1a18; font-weight: 500; }
-  #page-po .po-tab:hover:not(.active) { color: #555; }
-  #page-po .po-tab-add-btn { padding: 8px 14px; cursor: pointer; color: #bbb; font-size: 20px; line-height: 1; background: none; border: none; }
-  #page-po .po-tab-add-btn:hover { color: #1a1a18; }
+  #page-po .po-tabs-row, #page-ps .po-tabs-row { background: #fff; border-bottom: 1px solid #e5e5e3; padding: 0 24px; display: flex; align-items: center; overflow-x: auto; }
+  #page-po .po-tab, #page-ps .po-tab { padding: 11px 18px; cursor: pointer; border-bottom: 2px solid transparent; font-size: 13px; font-weight: 400; color: #999; white-space: nowrap; margin-bottom: -1px; }
+  #page-po .po-tab.active, #page-ps .po-tab.active { border-bottom-color: #1a1a18; color: #1a1a18; font-weight: 500; }
+  #page-po .po-tab:hover, #page-ps .po-tab:hover:not(.active) { color: #555; }
+  #page-po .po-tab-add-btn, #page-ps .po-tab-add-btn { padding: 8px 14px; cursor: pointer; color: #bbb; font-size: 20px; line-height: 1; background: none; border: none; }
+  #page-po .po-tab-add-btn:hover, #page-ps .po-tab-add-btn:hover { color: #1a1a18; }
 
-  #page-po .form-area { padding: 24px; max-width: 1100px; margin: 0 auto; }
-  #page-po .colorway-panel { display: none; }
-  #page-po .colorway-panel.active { display: block; }
-  #page-po .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-  #page-po .panel-header h2 { font-size: 13px; font-weight: 500; color: #999; }
-  #page-po .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  #page-po .form-section { background: #fff; border-radius: 12px; border: 1px solid #e5e5e3; padding: 16px; margin-bottom: 16px; }
-  #page-po .form-section h3 { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: #555; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0ee; }
-  #page-po .field-row { margin-bottom: 10px; }
-  #page-po .field-row label { display: block; font-size: 12px; color: #444; margin-bottom: 4px; }
-  #page-po .field-row input[type=text],
-  #page-po .field-row input[type=number],
-  #page-po .field-row textarea { width: 100%; border: 1px solid #ddd; border-radius: 7px; padding: 8px 10px; font-size: 13px; font-family: inherit; background: #fff; color: #1a1a18; }
-  #page-po .field-row input[type=text]:focus,
-  #page-po .field-row input[type=number]:focus,
-  #page-po .field-row textarea:focus { outline: 2px solid #378add; outline-offset: 1px; border-color: transparent; }
-  #page-po .field-row input[readonly] { background: #f9f9f8; color: #555; }
-  #page-po .field-row.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  #page-po .sizes-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
-  #page-po .size-field label { display: block; font-size: 12px; color: #444; margin-bottom: 4px; }
-  #page-po .size-field input { width: 100%; border: 1px solid #ddd; border-radius: 7px; padding: 7px 6px; font-size: 13px; font-family: inherit; text-align: center; }
-  #page-po .size-field input:focus { outline: 2px solid #378add; outline-offset: 1px; border-color: transparent; }
-  #page-po .color-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
-  #page-po .color-row input { flex: 1; border: 1px solid #ddd; border-radius: 7px; padding: 7px 10px; font-size: 13px; font-family: inherit; }
-  #page-po .color-row input.hex-input { max-width: 110px; }
-  #page-po .color-row input:focus { outline: 2px solid #378add; outline-offset: 1px; border-color: transparent; }
-  #page-po .emb-file-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
-  #page-po .emb-file-row input { flex: 1; border: 1px solid #ddd; border-radius: 7px; padding: 7px 10px; font-size: 13px; font-family: inherit; }
-  #page-po .emb-file-row input:focus { outline: 2px solid #378add; outline-offset: 1px; border-color: transparent; }
-  #page-po .mockup-preview { margin-top: 8px; }
-  #page-po .mockup-preview img { max-height: 120px; border: 1px solid #e5e5e3; border-radius: 7px; display: none; }
-  #page-po .static-editable { background: #f9f9f8; border: 1px solid #e5e5e3; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; }
-  #page-po .static-editable h4 { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: #555; margin-bottom: 6px; }
-  #page-po .static-editable .static-content { font-size: 12px; color: #444; line-height: 1.7; }
-  #page-po .static-editable .static-content a { color: #378add; }
-  #page-po .static-editable .edit-bar { margin-top: 8px; display: flex; justify-content: flex-end; }
-  #page-po .btn-edit { background: none; border: 1px solid #ddd; border-radius: 6px; color: #888; font-size: 11px; padding: 3px 10px; cursor: pointer; font-family: inherit; }
-  #page-po .btn-edit:hover { background: #f0f0ee; color: #1a1a18; }
-  #page-po .static-edit-form { display: none; margin-top: 10px; border-top: 1px solid #e5e5e3; padding-top: 10px; }
-  #page-po .static-edit-form.open { display: block; }
-  #page-po .static-edit-form input[type=text] { width: 100%; border: 1px solid #ddd; border-radius: 7px; padding: 7px 10px; font-size: 12px; font-family: inherit; margin-bottom: 6px; }
-  #page-po .static-edit-form input[type=text]:focus { outline: 2px solid #378add; outline-offset: 1px; border-color: transparent; }
-  #page-po .static-edit-form label { font-size: 12px; color: #666; display: block; margin-bottom: 3px; }
-  #page-po .btn-save-edit { background: #1a1a18; color: white; border: none; border-radius: 7px; font-size: 12px; padding: 6px 14px; cursor: pointer; font-family: inherit; margin-right: 6px; }
-  #page-po .btn-save-edit:hover { background: #333; }
-  #page-po .btn-cancel-edit { background: none; border: 1px solid #ddd; border-radius: 7px; color: #666; font-size: 12px; padding: 6px 12px; cursor: pointer; font-family: inherit; }
-  #page-po .btn-cancel-edit:hover { background: #f5f5f4; }
-  #page-po .fully-static { background: #f9f9f8; border: 1px solid #e5e5e3; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 12px; color: #777; line-height: 1.7; }
-  #page-po .fully-static h4 { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: #555; margin-bottom: 5px; }
+  #page-po .form-area, #page-ps .form-area { padding: 24px; max-width: 1100px; margin: 0 auto; }
+  #page-po .colorway-panel, #page-ps .colorway-panel { display: none; }
+  #page-po .colorway-panel.active, #page-ps .colorway-panel.active { display: block; }
+  #page-po .panel-header, #page-ps .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  #page-po .panel-header h2, #page-ps .panel-header h2 { font-size: 13px; font-weight: 500; color: #999; }
+  #page-po .form-grid, #page-ps .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  #page-po .form-section, #page-ps .form-section { background: #fff; border-radius: 12px; border: 1px solid #e5e5e3; padding: 16px; margin-bottom: 16px; }
+  #page-po .form-section h3, #page-ps .form-section h3 { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: #555; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0ee; }
+  #page-po .field-row, #page-ps .field-row { margin-bottom: 10px; }
+  #page-po .field-row label, #page-ps .field-row label { display: block; font-size: 12px; color: #444; margin-bottom: 4px; }
+  #page-po .field-row input[type=text], #page-ps .field-row input[type=text],
+  #page-po .field-row input[type=number], #page-ps .field-row input[type=number],
+  #page-po .field-row textarea, #page-ps .field-row textarea { width: 100%; border: 1px solid #ddd; border-radius: 7px; padding: 8px 10px; font-size: 13px; font-family: inherit; background: #fff; color: #1a1a18; }
+  #page-po .field-row input[type=text]:focus, #page-ps .field-row input[type=text]:focus,
+  #page-po .field-row input[type=number]:focus, #page-ps .field-row input[type=number]:focus,
+  #page-po .field-row textarea:focus, #page-ps .field-row textarea:focus { outline: 2px solid #378add; outline-offset: 1px; border-color: transparent; }
+  #page-po .field-row input[readonly], #page-ps .field-row input[readonly] { background: #f9f9f8; color: #555; }
+  #page-po .field-row.two-col, #page-ps .field-row.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  #page-po .sizes-grid, #page-ps .sizes-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+  #page-po .size-field label, #page-ps .size-field label { display: block; font-size: 12px; color: #444; margin-bottom: 4px; }
+  #page-po .size-field input, #page-ps .size-field input { width: 100%; border: 1px solid #ddd; border-radius: 7px; padding: 7px 6px; font-size: 13px; font-family: inherit; text-align: center; }
+  #page-po .size-field input:focus, #page-ps .size-field input:focus { outline: 2px solid #378add; outline-offset: 1px; border-color: transparent; }
+  #page-po .color-row, #page-ps .color-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  #page-po .color-row input, #page-ps .color-row input { flex: 1; border: 1px solid #ddd; border-radius: 7px; padding: 7px 10px; font-size: 13px; font-family: inherit; }
+  #page-po .color-row input.hex-input, #page-ps .color-row input.hex-input { max-width: 110px; }
+  #page-po .color-row input:focus, #page-ps .color-row input:focus { outline: 2px solid #378add; outline-offset: 1px; border-color: transparent; }
+  #page-po .emb-file-row, #page-ps .emb-file-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  #page-po .emb-file-row input, #page-ps .emb-file-row input { flex: 1; border: 1px solid #ddd; border-radius: 7px; padding: 7px 10px; font-size: 13px; font-family: inherit; }
+  #page-po .emb-file-row input:focus, #page-ps .emb-file-row input:focus { outline: 2px solid #378add; outline-offset: 1px; border-color: transparent; }
+  #page-po .mockup-preview, #page-ps .mockup-preview { margin-top: 8px; }
+  #page-po .mockup-preview img, #page-ps .mockup-preview img { max-height: 120px; border: 1px solid #e5e5e3; border-radius: 7px; display: none; }
+  #page-po .static-editable, #page-ps .static-editable { background: #f9f9f8; border: 1px solid #e5e5e3; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; }
+  #page-po .static-editable h4, #page-ps .static-editable h4 { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: #555; margin-bottom: 6px; }
+  #page-po .static-editable .static-content, #page-ps .static-editable .static-content { font-size: 12px; color: #444; line-height: 1.7; }
+  #page-po .static-editable .static-content a, #page-ps .static-editable .static-content a { color: #378add; }
+  #page-po .static-editable .edit-bar, #page-ps .static-editable .edit-bar { margin-top: 8px; display: flex; justify-content: flex-end; }
+  #page-po .btn-edit, #page-ps .btn-edit { background: none; border: 1px solid #ddd; border-radius: 6px; color: #888; font-size: 11px; padding: 3px 10px; cursor: pointer; font-family: inherit; }
+  #page-po .btn-edit:hover, #page-ps .btn-edit:hover { background: #f0f0ee; color: #1a1a18; }
+  #page-po .static-edit-form, #page-ps .static-edit-form { display: none; margin-top: 10px; border-top: 1px solid #e5e5e3; padding-top: 10px; }
+  #page-po .static-edit-form.open, #page-ps .static-edit-form.open { display: block; }
+  #page-po .static-edit-form input[type=text], #page-ps .static-edit-form input[type=text] { width: 100%; border: 1px solid #ddd; border-radius: 7px; padding: 7px 10px; font-size: 12px; font-family: inherit; margin-bottom: 6px; }
+  #page-po .static-edit-form input[type=text]:focus, #page-ps .static-edit-form input[type=text]:focus { outline: 2px solid #378add; outline-offset: 1px; border-color: transparent; }
+  #page-po .static-edit-form label, #page-ps .static-edit-form label { font-size: 12px; color: #666; display: block; margin-bottom: 3px; }
+  #page-po .btn-save-edit, #page-ps .btn-save-edit { background: #1a1a18; color: white; border: none; border-radius: 7px; font-size: 12px; padding: 6px 14px; cursor: pointer; font-family: inherit; margin-right: 6px; }
+  #page-po .btn-save-edit:hover, #page-ps .btn-save-edit:hover { background: #333; }
+  #page-po .btn-cancel-edit, #page-ps .btn-cancel-edit { background: none; border: 1px solid #ddd; border-radius: 7px; color: #666; font-size: 12px; padding: 6px 12px; cursor: pointer; font-family: inherit; }
+  #page-po .btn-cancel-edit:hover, #page-ps .btn-cancel-edit:hover { background: #f5f5f4; }
+  #page-po .fully-static, #page-ps .fully-static { background: #f9f9f8; border: 1px solid #e5e5e3; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 12px; color: #777; line-height: 1.7; }
+  #page-po .fully-static h4, #page-ps .fully-static h4 { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: #555; margin-bottom: 5px; }
 
   /* PDF hidden container */
   #pdf-pages-container { position: absolute; left: -9999px; top: 0; }
@@ -1402,7 +1402,8 @@ function ps_buildDescription(rowId) {
 }
 
 function ps_buildPDF() {
-  const F = 'Arial, Helvetica, sans-serif';
+  const F = '"Times New Roman", Times, serif';
+  const SCRIPT = '"Brush Script MT", "Segoe Script", cursive';
 
   const ordernumber = document.getElementById('ps-ordernumber').value.trim();
   const club = document.getElementById('ps-club').value.trim();
@@ -1421,55 +1422,59 @@ function ps_buildPDF() {
 
   const productRows = rows.map(r => `
     <tr>
-      <td style="padding:8px 16px;text-align:center;border:none;">${r.product}</td>
-      <td style="padding:8px 16px;text-align:center;border:none;">${r.desc}</td>
+      <td style="padding:6px 12px;border:1px solid #000;">${r.product}</td>
+      <td style="padding:6px 12px;border:1px solid #000;">${r.desc}</td>
     </tr>`).join('');
 
   const addrLines = address.split('\n').filter(Boolean);
   const addrHTML = addrLines.map(l => `<div>${l}</div>`).join('');
 
-  return `<div style="width:1100px;background:white;font-family:${F};font-size:12px;color:#000;padding:36px 0 28px 56px;line-height:1.6;">
+  // Letter-spaced title like "O r d e r  C o n f i r m a t i o n"
+  const spacedTitle = 'Packing Slip'.split('').map(c => c === ' ' ? '&nbsp;&nbsp;' : c).join(' ');
+
+  return `<div style="width:850px;min-height:1100px;background:white;font-family:${F};font-size:13px;color:#000;padding:40px 56px 32px 56px;line-height:1.6;display:flex;flex-direction:column;box-sizing:border-box;">
 
     <!-- HEADER -->
-    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;padding-right:56px;">
-      <div style="width:80px;"></div>
-      <div style="text-align:center;font-size:26px;flex:1;">Packing Slip</div>
-      <div style="font-size:18px;width:80px;text-align:right;">Mayor</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="width:120px;"></div>
+      <div style="text-align:center;font-size:22px;flex:1;letter-spacing:2px;">${spacedTitle}</div>
+      <div style="font-family:${SCRIPT};font-size:26px;width:120px;text-align:right;">Mayor</div>
     </div>
-    <hr style="border:none;border-top:1px solid #aaa;margin-bottom:24px;">
+    <hr style="border:none;border-top:1px solid #000;margin-bottom:20px;">
 
     <div style="display:flex;gap:0;">
       <!-- LEFT COLUMN -->
-      <div style="flex:0 0 380px;padding-right:24px;border-right:1px solid #aaa;">
-        <div style="margin-bottom:12px;"><b>Order Number</b>: ${ordernumber}</div>
-        ${club ? `<div style="margin-bottom:12px;"><b>Club</b>: ${club}</div>` : ''}
-        ${box ? `<div style="margin-bottom:12px;"><b>Box</b>: ${box}</div>` : ''}
-        ${date ? `<div style="margin-bottom:12px;"><b>Date</b>: ${date}</div>` : ''}
-        <div style="margin-bottom:6px;"><b>Shipping / Billing Address:</b></div>
+      <div style="flex:0 0 280px;padding-right:24px;">
+        <div style="margin-bottom:8px;"><b>Order Number</b>: ${ordernumber}</div>
+        ${club ? `<div style="margin-bottom:8px;"><b>Club</b>: ${club}</div>` : ''}
+        ${box ? `<div style="margin-bottom:8px;"><b>Box</b>: ${box}</div>` : ''}
+        ${date ? `<div style="margin-bottom:8px;"><b>Date</b>: ${date}</div>` : ''}
+        <div style="margin-bottom:4px;"><b>Shipping / Billing Address:</b></div>
         <div style="line-height:1.6;">${addrHTML}</div>
       </div>
 
       <!-- RIGHT COLUMN -->
-      <div style="flex:1;padding-left:24px;">
+      <div style="flex:1;">
         <table style="width:100%;border-collapse:collapse;border:1px solid #000;">
           <thead>
             <tr style="background:#000;color:#fff;">
-              <th style="padding:8px 16px;font-weight:bold;text-align:center;border:none;">Product</th>
-              <th style="padding:8px 16px;font-weight:bold;text-align:center;border:none;">Description</th>
+              <th style="padding:6px 12px;font-weight:bold;text-align:left;border:1px solid #000;">Product</th>
+              <th style="padding:6px 12px;font-weight:bold;text-align:left;border:1px solid #000;">Description</th>
             </tr>
           </thead>
           <tbody>
             ${productRows}
             <tr>
-              <td style="padding:8px 16px;text-align:center;border:none;border-top:1px solid #000;">Total</td>
-              <td style="padding:8px 16px;text-align:center;border:none;border-top:1px solid #000;">${total}</td>
+              <td style="padding:6px 12px;font-weight:bold;text-align:right;border:1px solid #000;">Total</td>
+              <td style="padding:6px 12px;border:1px solid #000;">${total}</td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <div style="border-top:1px solid #aaa;text-align:center;font-size:11px;color:#444;padding-top:10px;margin-top:24px;">Mayor | 870 Inman Village Parkway NE, Suite 533, Atlanta, GA 30307 | 339-206-2111 | mayor@mayorclothing.com</div>
+    <div style="flex:1;"></div>
+    <div style="border-top:1px solid #000;text-align:center;font-size:10px;font-weight:bold;color:#000;padding-top:10px;">Mayor | 870 Inman Village Parkway NE, Suite 533, Atlanta, GA 30307 | 339-206-2111 | mayor@mayorclothing.com</div>
   </div>`;
 }
 
@@ -1494,14 +1499,14 @@ async function ps_generatePDF() {
       scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false,
     });
 
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'letter' });
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
-    const ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
+    const ratio = pageW / canvas.width;
     const dw = canvas.width * ratio;
     const dh = canvas.height * ratio;
-    pdf.addImage(imgData, 'JPEG', (pageW-dw)/2, (pageH-dh)/2, dw, dh);
+    pdf.addImage(imgData, 'JPEG', 0, 0, dw, dh);
 
     container.innerHTML = '';
 
