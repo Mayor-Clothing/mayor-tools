@@ -358,7 +358,6 @@
       </div>
     </div>
   </div>
-  <div id="ps-pdf-container" style="position:absolute;left:-9999px;top:0;"></div>
 </div><!-- end #page-ps -->
 
 
@@ -1401,134 +1400,155 @@ function ps_buildDescription(rowId) {
   return sizeStr;
 }
 
-function ps_buildPDF() {
-  const F = 'Georgia, "Times New Roman", Times, serif';
-
-  // Match PDFKit invoice: 612x792pt page, rendered at 2x for crispness = 1224x1584px
-  const SCALE = 2;
-  const PAGE_W = 612 * SCALE;
-  const PAGE_H = 792 * SCALE;
-  const MARGIN = 45 * SCALE;
-  const LEFT_W = 205 * SCALE;
-  const CONTENT_W = PAGE_W - MARGIN * 2;
-  const RIGHT_X = MARGIN + LEFT_W + (16 * SCALE);
-  const RIGHT_W = PAGE_W - MARGIN - RIGHT_X;
-
-  const ordernumber = document.getElementById('ps-ordernumber').value.trim();
-  const club = document.getElementById('ps-club').value.trim();
-  const box = document.getElementById('ps-box').value.trim();
-  const date = document.getElementById('ps-date').value.trim();
-  const address = document.getElementById('ps-address').value.trim();
-  const total = document.getElementById('ps-total').value.trim();
-
-  const rows = [];
-  document.querySelectorAll('#ps-products [id^="ps-row-"]').forEach(row => {
-    const id = row.id.replace('ps-row-', '');
-    const product = document.getElementById(`ps-product-${id}`).value.trim();
-    const desc = ps_buildDescription(id);
-    if (product || desc) rows.push({ product, desc });
-  });
-
-  const productRows = rows.map(r => `
-    <tr>
-      <td style="padding:5px 8px;border:0.4px solid #ccc;font-size:${8.5*SCALE}px;">${r.product}</td>
-      <td style="padding:5px 8px;border:0.4px solid #ccc;font-size:${8.5*SCALE}px;">${r.desc}</td>
-    </tr>`).join('');
-
-  const addrLines = address.split('\n').filter(Boolean);
-  const addrHTML = addrLines.map(l => `<div style="font-size:${9*SCALE}px;margin-bottom:${2*SCALE}px;">${l}</div>`).join('');
-
-  // Letter-spaced title like "O r d e r   C o n f i r m a t i o n" — each word's letters
-  // get single-space gaps (handled by letter-spacing), with extra non-breaking spaces
-  // between words so the word gap doesn't collapse and reads as a wider break.
-  const spacedTitle = 'Packing Slip'.split(' ')
-    .map(word => word.split('').join(' '))
-    .join('&nbsp;&nbsp;&nbsp;');
-
-  // Logo aspect ratio ~587:200 (2.935:1). Match PDFKit's width:88pt with proportional height.
-  const LOGO_W = 88 * SCALE;
-  const LOGO_H = Math.round(LOGO_W / 2.935);
-
-  return `<div style="width:${PAGE_W}px;height:${PAGE_H}px;background:white;font-family:${F};color:#1a1a18;box-sizing:border-box;position:relative;overflow:hidden;">
-
-    <!-- TITLE -->
-    <div style="position:absolute;top:${MARGIN}px;left:${MARGIN}px;width:${CONTENT_W}px;text-align:center;font-size:${16*SCALE}px;letter-spacing:${3*SCALE}px;white-space:nowrap;font-family:${F};">${spacedTitle}</div>
-
-    <!-- LOGO -->
-    <img src="Mayor_Logo_transparent.png" alt="" crossorigin="anonymous" style="position:absolute;top:${(MARGIN - 6*SCALE)}px;right:${MARGIN}px;width:${LOGO_W}px;height:${LOGO_H}px;object-fit:contain;display:block;">
-
-    <!-- RULE -->
-    <div style="position:absolute;top:${(MARGIN + 30*SCALE)}px;left:${MARGIN}px;width:${CONTENT_W}px;border-top:${0.75*SCALE}px solid #000;"></div>
-
-    <!-- LEFT COLUMN -->
-    <div style="position:absolute;top:${(MARGIN + 42*SCALE)}px;left:${MARGIN}px;width:${LEFT_W}px;font-size:${9.5*SCALE}px;line-height:1.4;font-family:${F};">
-      <div style="margin-bottom:${6*SCALE}px;"><b>Order Number</b>: ${ordernumber}</div>
-      ${club ? `<div style="margin-bottom:${6*SCALE}px;"><b>Club</b>: ${club}</div>` : ''}
-      ${box ? `<div style="margin-bottom:${6*SCALE}px;"><b>Box</b>: ${box}</div>` : ''}
-      ${date ? `<div style="margin-bottom:${6*SCALE}px;"><b>Date</b>: ${date}</div>` : ''}
-      <div style="margin-bottom:${4*SCALE}px;"><b>Shipping / Billing Address:</b></div>
-      <div style="margin-top:${2*SCALE}px;">${addrHTML}</div>
-    </div>
-
-    <!-- RIGHT COLUMN: TABLE -->
-    <div style="position:absolute;top:${(MARGIN + 42*SCALE)}px;left:${RIGHT_X}px;width:${RIGHT_W}px;">
-      <table style="width:100%;border-collapse:collapse;font-family:${F};">
-        <thead>
-          <tr style="background:#1a1a18;color:#fff;">
-            <th style="padding:${5*SCALE}px ${8*SCALE}px;font-weight:bold;text-align:left;font-size:${8.5*SCALE}px;">Product</th>
-            <th style="padding:${5*SCALE}px ${8*SCALE}px;font-weight:bold;text-align:left;font-size:${8.5*SCALE}px;">Description</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${productRows}
-          <tr>
-            <td style="padding:${5*SCALE}px ${8*SCALE}px;font-weight:bold;text-align:right;border:0.4px solid #ccc;font-size:${8.5*SCALE}px;">Total</td>
-            <td style="padding:${5*SCALE}px ${8*SCALE}px;border:0.4px solid #ccc;font-size:${8.5*SCALE}px;">${total}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- FOOTER -->
-    <div style="position:absolute;bottom:${38*SCALE}px;left:${MARGIN}px;width:${CONTENT_W}px;border-top:${0.75*SCALE}px solid #000;"></div>
-    <div style="position:absolute;bottom:${27*SCALE}px;left:${MARGIN}px;width:${CONTENT_W}px;text-align:center;font-size:${7*SCALE}px;font-weight:bold;letter-spacing:${0.5*SCALE}px;font-family:${F};">Mayor | 870 Inman Village Parkway NE, Suite 533, Atlanta, GA 30307 | 339-206-2111 | mayor@mayorclothing.com</div>
-  </div>`;
-}
-
 async function ps_generatePDF() {
   const btn = document.getElementById('ps-download-btn');
   btn.textContent = 'Generating...';
   btn.disabled = true;
   try {
     const { jsPDF } = window.jspdf;
-    const container = document.getElementById('ps-pdf-container');
-    container.innerHTML = '';
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
 
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'position:absolute;left:0;top:0;';
-    wrapper.innerHTML = ps_buildPDF();
-    container.appendChild(wrapper);
+    const pageW = 612, pageH = 792, margin = 45;
+    const contentW = pageW - margin * 2;
+    const DARK = [26, 26, 24]; // #1a1a18
 
-    await new Promise(r => setTimeout(r, 500));
+    const ordernumber = document.getElementById('ps-ordernumber').value.trim();
+    const club = document.getElementById('ps-club').value.trim();
+    const box = document.getElementById('ps-box').value.trim();
+    const date = document.getElementById('ps-date').value.trim();
+    const address = document.getElementById('ps-address').value.trim();
+    const total = document.getElementById('ps-total').value.trim();
 
-    const pageEl = wrapper.querySelector('div');
-    const canvas = await html2canvas(pageEl, {
-      scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false,
+    const rows = [];
+    document.querySelectorAll('#ps-products [id^="ps-row-"]').forEach(row => {
+      const id = row.id.replace('ps-row-', '');
+      const product = document.getElementById(`ps-product-${id}`).value.trim();
+      const desc = ps_buildDescription(id);
+      if (product || desc) rows.push({ product, desc });
     });
 
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-    const ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
-    const dw = canvas.width * ratio;
-    const dh = canvas.height * ratio;
-    pdf.addImage(imgData, 'JPEG', (pageW-dw)/2, (pageH-dh)/2, dw, dh);
+    doc.setTextColor(...DARK);
 
-    container.innerHTML = '';
+    // ── TITLE ── 16pt Times-Roman, centered, letter-spaced
+    doc.setFont('times', 'normal');
+    doc.setFontSize(16);
+    const spacedTitle = 'Packing Slip'.split(' ')
+      .map(word => word.split('').join(' '))
+      .join('     '); // extra gap between words
+    doc.text(spacedTitle, pageW / 2, margin + 12, { align: 'center', charSpace: 1.5 });
 
-    const ordernumber = document.getElementById('ps-ordernumber').value.trim() || 'Order';
-    pdf.save(`Mayor_Packing_Slip_${ordernumber.replace(/[^a-z0-9]/gi,'_')}.pdf`);
+    // ── LOGO ── "Mayor" in Times italic, top right
+    doc.setFont('times', 'italic');
+    doc.setFontSize(20);
+    doc.text('Mayor', pageW - margin, margin + 8, { align: 'right' });
+    doc.setFont('times', 'normal');
+    doc.setFontSize(16);
+
+    // ── RULE ──
+    doc.setLineWidth(0.75);
+    doc.setDrawColor(0, 0, 0);
+    doc.line(margin, margin + 30, pageW - margin, margin + 30);
+
+    // ── LAYOUT ──
+    const bodyY = margin + 42;
+    const leftW = 205;
+    const rightX = margin + leftW + 16;
+    const rightW = pageW - margin - rightX;
+
+    // ── LEFT COLUMN ──
+    let ly = bodyY;
+
+    const fieldLine = (label, value) => {
+      doc.setFontSize(9.5);
+      doc.setFont('times', 'bold');
+      doc.text(label, margin, ly);
+      const lw = doc.getTextWidth(label);
+      doc.setFont('times', 'normal');
+      doc.text(': ' + value, margin + lw, ly);
+      ly += 14;
+    };
+
+    fieldLine('Order Number', ordernumber);
+    if (club) fieldLine('Club', club);
+    if (box) fieldLine('Box', box);
+    if (date) fieldLine('Date', date);
+
+    doc.setFontSize(9.5);
+    doc.setFont('times', 'bold');
+    doc.text('Shipping / Billing Address:', margin, ly);
+    ly += 13;
+
+    doc.setFont('times', 'normal');
+    doc.setFontSize(9);
+    address.split('\n').map(s => s.trim()).filter(Boolean).forEach(line => {
+      doc.text(line, margin, ly);
+      ly += 12;
+    });
+
+    // ── RIGHT COLUMN — TABLE ──
+    let ry = bodyY;
+    const pW = 90;
+    const dW = rightW - pW;
+    const cP = rightX;
+    const cD = rightX + pW;
+
+    // Header
+    const hH = 18;
+    doc.setFillColor(...DARK);
+    doc.rect(rightX, ry, rightW, hH, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('times', 'bold');
+    doc.setFontSize(8.5);
+    doc.text('Product', cP + 4, ry + 12);
+    doc.text('Description', cD + 4, ry + 12);
+    doc.setTextColor(...DARK);
+    ry += hH;
+
+    // Product rows
+    doc.setDrawColor(204, 204, 204);
+    doc.setLineWidth(0.4);
+    rows.forEach((r, i) => {
+      doc.setFont('times', 'normal');
+      doc.setFontSize(8.5);
+      const descLines = doc.splitTextToSize(r.desc, dW - 8);
+      const rowH = Math.max(26, descLines.length * 11 + 8);
+
+      if (i % 2 === 1) {
+        doc.setFillColor(249, 249, 248);
+        doc.rect(rightX, ry, rightW, rowH, 'F');
+      }
+      doc.rect(rightX, ry, rightW, rowH, 'S');
+
+      doc.text(r.product, cP + 4, ry + 12);
+      descLines.forEach((line, li) => {
+        doc.text(line, cD + 4, ry + 12 + li * 11);
+      });
+
+      ry += rowH;
+    });
+
+    // Total row
+    const totH = 18;
+    doc.rect(rightX, ry, rightW, totH, 'S');
+    doc.setFont('times', 'bold');
+    doc.setFontSize(8.5);
+    doc.text('Total', cD - 4, ry + 12, { align: 'right' });
+    doc.setFont('times', 'normal');
+    doc.text(String(total), cD + 4, ry + 12);
+
+    // ── FOOTER ──
+    doc.setLineWidth(0.75);
+    doc.setDrawColor(0, 0, 0);
+    doc.line(margin, pageH - 38, pageW - margin, pageH - 38);
+    doc.setFont('times', 'bold');
+    doc.setFontSize(7);
+    doc.text(
+      'Mayor | 870 Inman Village Parkway NE, Suite 533, Atlanta, GA 30307 | 339-206-2111 | mayor@mayorclothing.com',
+      pageW / 2, pageH - 27, { align: 'center', charSpace: 0.5 }
+    );
+
+    const filename = (ordernumber || 'Order').replace(/[^a-z0-9]/gi, '_');
+    doc.save(`Mayor_Packing_Slip_${filename}.pdf`);
   } catch(err) {
     console.error(err);
     alert('PDF generation failed: ' + err.message);
