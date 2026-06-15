@@ -1436,7 +1436,7 @@ async function ps_generatePDF() {
     const spacedTitle = 'Packing Slip'.split(' ')
       .map(word => word.split('').join(' '))
       .join('     '); // extra gap between words
-    doc.text(spacedTitle, pageW / 2, margin + 12, { align: 'center', charSpace: 1.5 });
+    doc.text(spacedTitle, pageW / 2, margin + 12, { align: 'center' });
 
     // ── LOGO ── actual Mayor script logo, top right, 88pt wide (matches PDFKit)
     const logoW = 88;
@@ -1486,7 +1486,7 @@ async function ps_generatePDF() {
 
     // ── RIGHT COLUMN — TABLE ──
     let ry = bodyY;
-    const pW = 90;
+    const pW = 115;
     const dW = rightW - pW;
     const cP = rightX;
     const cD = rightX + pW;
@@ -1546,7 +1546,7 @@ async function ps_generatePDF() {
     doc.setFontSize(7);
     doc.text(
       'Mayor | 870 Inman Village Parkway NE, Suite 533, Atlanta, GA 30307 | 339-206-2111 | mayor@mayorclothing.com',
-      pageW / 2, pageH - 27, { align: 'center', charSpace: 0.5 }
+      pageW / 2, pageH - 27, { align: 'center' }
     );
 
     const filename = (ordernumber || 'Order').replace(/[^a-z0-9]/gi, '_');
