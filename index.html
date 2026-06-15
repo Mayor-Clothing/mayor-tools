@@ -362,9 +362,15 @@
           </div>
         </div>
         <div class="form-section">
-          <h3>Shipping / Billing Address</h3>
+          <h3>Billing Address</h3>
           <div class="field-row">
             <textarea id="ps-address" rows="5" placeholder="Club Name&#10;Attn: Name&#10;Street&#10;City, State ZIP&#10;Phone" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
+          </div>
+        </div>
+        <div class="form-section">
+          <h3>Shipping Address <span style="color:#aaa;font-weight:400;">(optional &mdash; leave blank if same as billing)</span></h3>
+          <div class="field-row">
+            <textarea id="ps-shipping-address" rows="5" placeholder="Leave blank if same as billing address" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
           </div>
         </div>
       </div>
@@ -1506,6 +1512,7 @@ async function ps_generatePDF() {
     const box = document.getElementById('ps-box').value.trim();
     const date = document.getElementById('ps-date').value.trim();
     const address = document.getElementById('ps-address').value.trim();
+    const shippingAddress = document.getElementById('ps-shipping-address').value.trim();
     const total = document.getElementById('ps-total').value.trim();
 
     const rows = [];
@@ -1563,9 +1570,11 @@ async function ps_generatePDF() {
     if (box) fieldLine('Box', box);
     if (date) fieldLine('Date', date);
 
+    const hasShipping = shippingAddress && shippingAddress.trim() !== address.trim();
+
     doc.setFontSize(9.5);
     doc.setFont('times', 'bold');
-    doc.text('Shipping / Billing Address:', margin, ly);
+    doc.text(hasShipping ? 'Billing Address:' : 'Shipping / Billing Address:', margin, ly);
     ly += 16;
 
     doc.setFont('times', 'normal');
@@ -1574,6 +1583,21 @@ async function ps_generatePDF() {
       doc.text(line, margin, ly);
       ly += 14;
     });
+
+    if (hasShipping) {
+      ly += 8;
+      doc.setFontSize(9.5);
+      doc.setFont('times', 'bold');
+      doc.text('Shipping Address:', margin, ly);
+      ly += 16;
+
+      doc.setFont('times', 'normal');
+      doc.setFontSize(9);
+      shippingAddress.split('\n').map(s => s.trim()).filter(Boolean).forEach(line => {
+        doc.text(line, margin, ly);
+        ly += 14;
+      });
+    }
 
     // ── RIGHT COLUMN — TABLE ──
     let ry = bodyY;
