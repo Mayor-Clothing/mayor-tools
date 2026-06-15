@@ -1438,16 +1438,21 @@ function ps_buildPDF() {
   const addrLines = address.split('\n').filter(Boolean);
   const addrHTML = addrLines.map(l => `<div style="font-size:${9*SCALE}px;margin-bottom:${2*SCALE}px;">${l}</div>`).join('');
 
-  // Letter-spaced title like "O r d e r  C o n f i r m a t i o n"
-  const spacedTitle = 'Packing Slip'.split('').map(c => c === ' ' ? '&nbsp;&nbsp;' : c).join(' ');
+  // Letter-spaced title like "O r d e r  C o n f i r m a t i o n" — natural single-space join,
+  // letter-spacing CSS handles the visual gap (matches PDFKit characterSpacing behavior)
+  const spacedTitle = 'Packing Slip'.split('').join(' ');
+
+  // Logo aspect ratio ~587:200 (2.935:1). Match PDFKit's width:88pt with proportional height.
+  const LOGO_W = 88 * SCALE;
+  const LOGO_H = Math.round(LOGO_W / 2.935);
 
   return `<div style="width:${PAGE_W}px;height:${PAGE_H}px;background:white;font-family:${F};color:#1a1a18;box-sizing:border-box;position:relative;overflow:hidden;">
 
     <!-- TITLE -->
-    <div style="position:absolute;top:${MARGIN}px;left:${MARGIN}px;width:${CONTENT_W}px;text-align:center;font-size:${16*SCALE}px;letter-spacing:${3*SCALE}px;">${spacedTitle}</div>
+    <div style="position:absolute;top:${MARGIN}px;left:${MARGIN}px;width:${CONTENT_W}px;text-align:center;font-size:${16*SCALE}px;letter-spacing:${3*SCALE}px;white-space:nowrap;">${spacedTitle}</div>
 
     <!-- LOGO -->
-    <img src="Mayor_Logo_transparent.png" alt="Mayor" crossorigin="anonymous" style="position:absolute;top:${(MARGIN - 6*SCALE)}px;right:${MARGIN}px;width:${88*SCALE}px;height:auto;">
+    <img src="Mayor_Logo_transparent.png" alt="" crossorigin="anonymous" style="position:absolute;top:${(MARGIN - 6*SCALE)}px;right:${MARGIN}px;width:${LOGO_W}px;height:${LOGO_H}px;object-fit:contain;display:block;">
 
     <!-- RULE -->
     <div style="position:absolute;top:${(MARGIN + 30*SCALE)}px;left:${MARGIN}px;width:${CONTENT_W}px;border-top:${0.75*SCALE}px solid #000;"></div>
@@ -1501,7 +1506,7 @@ async function ps_generatePDF() {
     wrapper.innerHTML = ps_buildPDF();
     container.appendChild(wrapper);
 
-    await new Promise(r => setTimeout(r, 300));
+    await new Promise(r => setTimeout(r, 500));
 
     const pageEl = wrapper.querySelector('div');
     const canvas = await html2canvas(pageEl, {
