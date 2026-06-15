@@ -1403,7 +1403,16 @@ function ps_buildDescription(rowId) {
 
 function ps_buildPDF() {
   const F = '"Times New Roman", Times, serif';
-  const SCRIPT = '"Brush Script MT", "Segoe Script", cursive';
+
+  // Match PDFKit invoice: 612x792pt page, rendered at 2x for crispness = 1224x1584px
+  const SCALE = 2;
+  const PAGE_W = 612 * SCALE;
+  const PAGE_H = 792 * SCALE;
+  const MARGIN = 45 * SCALE;
+  const LEFT_W = 205 * SCALE;
+  const CONTENT_W = PAGE_W - MARGIN * 2;
+  const RIGHT_X = MARGIN + LEFT_W + (16 * SCALE);
+  const RIGHT_W = PAGE_W - MARGIN - RIGHT_X;
 
   const ordernumber = document.getElementById('ps-ordernumber').value.trim();
   const club = document.getElementById('ps-club').value.trim();
@@ -1422,59 +1431,59 @@ function ps_buildPDF() {
 
   const productRows = rows.map(r => `
     <tr>
-      <td style="padding:6px 12px;border:1px solid #000;">${r.product}</td>
-      <td style="padding:6px 12px;border:1px solid #000;">${r.desc}</td>
+      <td style="padding:5px 8px;border:0.4px solid #ccc;font-size:${8.5*SCALE}px;">${r.product}</td>
+      <td style="padding:5px 8px;border:0.4px solid #ccc;font-size:${8.5*SCALE}px;">${r.desc}</td>
     </tr>`).join('');
 
   const addrLines = address.split('\n').filter(Boolean);
-  const addrHTML = addrLines.map(l => `<div>${l}</div>`).join('');
+  const addrHTML = addrLines.map(l => `<div style="font-size:${9*SCALE}px;margin-bottom:${2*SCALE}px;">${l}</div>`).join('');
 
   // Letter-spaced title like "O r d e r  C o n f i r m a t i o n"
   const spacedTitle = 'Packing Slip'.split('').map(c => c === ' ' ? '&nbsp;&nbsp;' : c).join(' ');
 
-  return `<div style="width:850px;min-height:1100px;background:white;font-family:${F};font-size:13px;color:#000;padding:40px 56px 32px 56px;line-height:1.6;display:flex;flex-direction:column;box-sizing:border-box;">
+  return `<div style="width:${PAGE_W}px;height:${PAGE_H}px;background:white;font-family:${F};color:#1a1a18;box-sizing:border-box;position:relative;overflow:hidden;">
 
-    <!-- HEADER -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div style="width:120px;"></div>
-      <div style="text-align:center;font-size:22px;flex:1;letter-spacing:2px;">${spacedTitle}</div>
-      <div style="font-family:${SCRIPT};font-size:26px;width:120px;text-align:right;">Mayor</div>
-    </div>
-    <hr style="border:none;border-top:1px solid #000;margin-bottom:20px;">
+    <!-- TITLE -->
+    <div style="position:absolute;top:${MARGIN}px;left:${MARGIN}px;width:${CONTENT_W}px;text-align:center;font-size:${16*SCALE}px;letter-spacing:${3*SCALE}px;">${spacedTitle}</div>
 
-    <div style="display:flex;gap:0;">
-      <!-- LEFT COLUMN -->
-      <div style="flex:0 0 280px;padding-right:24px;">
-        <div style="margin-bottom:8px;"><b>Order Number</b>: ${ordernumber}</div>
-        ${club ? `<div style="margin-bottom:8px;"><b>Club</b>: ${club}</div>` : ''}
-        ${box ? `<div style="margin-bottom:8px;"><b>Box</b>: ${box}</div>` : ''}
-        ${date ? `<div style="margin-bottom:8px;"><b>Date</b>: ${date}</div>` : ''}
-        <div style="margin-bottom:4px;"><b>Shipping / Billing Address:</b></div>
-        <div style="line-height:1.6;">${addrHTML}</div>
-      </div>
+    <!-- LOGO -->
+    <img src="Mayor_Logo_transparent.png" alt="Mayor" crossorigin="anonymous" style="position:absolute;top:${(MARGIN - 6*SCALE)}px;right:${MARGIN}px;width:${88*SCALE}px;height:auto;">
 
-      <!-- RIGHT COLUMN -->
-      <div style="flex:1;">
-        <table style="width:100%;border-collapse:collapse;border:1px solid #000;">
-          <thead>
-            <tr style="background:#000;color:#fff;">
-              <th style="padding:6px 12px;font-weight:bold;text-align:left;border:1px solid #000;">Product</th>
-              <th style="padding:6px 12px;font-weight:bold;text-align:left;border:1px solid #000;">Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${productRows}
-            <tr>
-              <td style="padding:6px 12px;font-weight:bold;text-align:right;border:1px solid #000;">Total</td>
-              <td style="padding:6px 12px;border:1px solid #000;">${total}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <!-- RULE -->
+    <div style="position:absolute;top:${(MARGIN + 30*SCALE)}px;left:${MARGIN}px;width:${CONTENT_W}px;border-top:${0.75*SCALE}px solid #000;"></div>
+
+    <!-- LEFT COLUMN -->
+    <div style="position:absolute;top:${(MARGIN + 42*SCALE)}px;left:${MARGIN}px;width:${LEFT_W}px;font-size:${9.5*SCALE}px;line-height:1.4;">
+      <div style="margin-bottom:${6*SCALE}px;"><b>Order Number</b>: ${ordernumber}</div>
+      ${club ? `<div style="margin-bottom:${6*SCALE}px;"><b>Club</b>: ${club}</div>` : ''}
+      ${box ? `<div style="margin-bottom:${6*SCALE}px;"><b>Box</b>: ${box}</div>` : ''}
+      ${date ? `<div style="margin-bottom:${6*SCALE}px;"><b>Date</b>: ${date}</div>` : ''}
+      <div style="margin-bottom:${4*SCALE}px;"><b>Shipping / Billing Address:</b></div>
+      <div style="margin-top:${2*SCALE}px;">${addrHTML}</div>
     </div>
 
-    <div style="flex:1;"></div>
-    <div style="border-top:1px solid #000;text-align:center;font-size:10px;font-weight:bold;color:#000;padding-top:10px;">Mayor | 870 Inman Village Parkway NE, Suite 533, Atlanta, GA 30307 | 339-206-2111 | mayor@mayorclothing.com</div>
+    <!-- RIGHT COLUMN: TABLE -->
+    <div style="position:absolute;top:${(MARGIN + 42*SCALE)}px;left:${RIGHT_X}px;width:${RIGHT_W}px;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#1a1a18;color:#fff;">
+            <th style="padding:${5*SCALE}px ${8*SCALE}px;font-weight:bold;text-align:left;font-size:${8.5*SCALE}px;">Product</th>
+            <th style="padding:${5*SCALE}px ${8*SCALE}px;font-weight:bold;text-align:left;font-size:${8.5*SCALE}px;">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${productRows}
+          <tr>
+            <td style="padding:${5*SCALE}px ${8*SCALE}px;font-weight:bold;text-align:right;border:0.4px solid #ccc;font-size:${8.5*SCALE}px;">Total</td>
+            <td style="padding:${5*SCALE}px ${8*SCALE}px;border:0.4px solid #ccc;font-size:${8.5*SCALE}px;">${total}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FOOTER -->
+    <div style="position:absolute;bottom:${38*SCALE}px;left:${MARGIN}px;width:${CONTENT_W}px;border-top:${0.75*SCALE}px solid #000;"></div>
+    <div style="position:absolute;bottom:${27*SCALE}px;left:${MARGIN}px;width:${CONTENT_W}px;text-align:center;font-size:${7*SCALE}px;font-weight:bold;letter-spacing:${0.5*SCALE}px;">Mayor | 870 Inman Village Parkway NE, Suite 533, Atlanta, GA 30307 | 339-206-2111 | mayor@mayorclothing.com</div>
   </div>`;
 }
 
@@ -1503,10 +1512,10 @@ async function ps_generatePDF() {
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
-    const ratio = pageW / canvas.width;
+    const ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
     const dw = canvas.width * ratio;
     const dh = canvas.height * ratio;
-    pdf.addImage(imgData, 'JPEG', 0, 0, dw, dh);
+    pdf.addImage(imgData, 'JPEG', (pageW-dw)/2, (pageH-dh)/2, dw, dh);
 
     container.innerHTML = '';
 
