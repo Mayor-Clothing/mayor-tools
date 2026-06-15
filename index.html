@@ -344,6 +344,13 @@
     </div>
   </div>
   <div class="form-area" id="ps-form-area">
+    <div class="form-section" style="margin-bottom:16px;">
+      <h3>Paste from HubSpot</h3>
+      <div class="field-row">
+        <textarea id="ps-hubspot-paste" rows="6" placeholder="Paste HubSpot order data here…" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;font-family:monospace;resize:vertical;"></textarea>
+      </div>
+      <button class="btn-add" onclick="ps_parseHubspot()">Auto-fill from HubSpot data</button>
+    </div>
     <div class="form-grid">
       <div>
         <div class="form-section">
@@ -409,10 +416,7 @@ function switchPage(page) {
 // ══════════════════════════════════════════════
 let itemCount = 0;
 
-function parseHubspot() {
-  const raw = document.getElementById('hubspot-paste').value;
-  if (!raw.trim()) return;
-
+function extractHubspotData(raw) {
   const lines = raw.split('\n').map(l => l.trim());
   const data = {};
 
@@ -437,6 +441,22 @@ function parseHubspot() {
     return '';
   }
 
+  return { data, get };
+}
+
+const formatAddrHS = (addr) => addr
+  .replace(/([a-z])([A-Z])/g, '$1\n$2')
+  .replace(/([a-zA-Z])(\d{3,})/g, '$1\n$2')
+  .replace(/(\d{5})\s*\(/g, '$1\n(')
+  .replace(/\s+([a-zA-Z0-9._%+\-]+@)/g, '\n$1')
+  .replace(/\n+/g, '\n').trim();
+
+function parseHubspot() {
+  const raw = document.getElementById('hubspot-paste').value;
+  if (!raw.trim()) return;
+
+  const { get } = extractHubspotData(raw);
+
   const orderNum = get('a. Order');
   const club     = get('b. Club');
   const address  = get('c. Shipping');
@@ -447,21 +467,14 @@ function parseHubspot() {
   if (orderNum) document.getElementById('order_number').value = orderNum;
   if (club)     document.getElementById('club').value = club;
 
-  const formatAddr = (addr) => addr
-    .replace(/([a-z])([A-Z])/g, '$1\n$2')
-    .replace(/([a-zA-Z])(\d{3,})/g, '$1\n$2')
-    .replace(/(\d{5})\s*\(/g, '$1\n(')
-    .replace(/\s+([a-zA-Z0-9._%+\-]+@)/g, '\n$1')
-    .replace(/\n+/g, '\n').trim();
-
   if (address && address !== '--') {
-    document.getElementById('billing_address').value = formatAddr(address);
+    document.getElementById('billing_address').value = formatAddrHS(address);
   }
   if (billingAddress && billingAddress !== '--' && billingAddress.trim() !== address.trim()) {
     // c_billing_address present and differs from shipping -> shipping address is the "address" field,
     // billing address is the c_billing_address field
-    document.getElementById('billing_address').value = formatAddr(billingAddress);
-    document.getElementById('shipping_address').value = formatAddr(address);
+    document.getElementById('billing_address').value = formatAddrHS(billingAddress);
+    document.getElementById('shipping_address').value = formatAddrHS(address);
   }
 
   if (shipDate && shipDate !== '--') document.getElementById('ship_date').value = shipDate;
@@ -1433,6 +1446,78 @@ po_addColorway();
 let ps_rowCounter = 0;
 const PS_SIZES = ['XS','S','M','L','XL','XXL','3XL'];
 const PS_LOGO_B64 = "data:image/png;base64,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";
+
+function ps_parseHubspot() {
+  const raw = document.getElementById('ps-hubspot-paste').value;
+  if (!raw.trim()) return;
+
+  const { get } = extractHubspotData(raw);
+
+  const orderNum = get('a. Order');
+  const club     = get('b. Club');
+  const address  = get('c. Shipping');
+  const billingAddress = get('c_billing_address') || get('c. Billing');
+  const shipDate = get('d. Shipping');
+
+  if (orderNum) document.getElementById('ps-ordernumber').value = orderNum;
+  if (club)     document.getElementById('ps-club').value = club;
+  if (shipDate && shipDate !== '--') document.getElementById('ps-date').value = shipDate;
+
+  if (address && address !== '--') {
+    document.getElementById('ps-address').value = formatAddrHS(address);
+  }
+  if (billingAddress && billingAddress !== '--' && billingAddress.trim() !== address.trim()) {
+    // c_billing_address present and differs from shipping -> shipping address is "address",
+    // billing address is c_billing_address
+    document.getElementById('ps-address').value = formatAddrHS(billingAddress);
+    document.getElementById('ps-shipping-address').value = formatAddrHS(address);
+  }
+
+  // Pull product/description/sizes the same way the invoice generator does
+  const descs = ['h. Description #1','i. Description #2','j. Description #3'].map(k => get(k));
+  const sizes = ['Sizes #1','Sizes #2','Sizes #3','Sizes #4','Sizes #5'].map(k => get(k));
+
+  let numItems = 0;
+  for (let i = 0; i < 5; i++) {
+    if ((sizes[i] && sizes[i] !== '--') || (descs[i] && descs[i] !== '--')) numItems = i + 1;
+  }
+  numItems = Math.max(1, numItems);
+
+  // Clear existing product rows and rebuild
+  document.getElementById('ps-products').innerHTML = '';
+  ps_rowCounter = 0;
+  for (let i = 0; i < numItems; i++) {
+    ps_addProduct();
+    const rowId = ps_rowCounter;
+
+    // Color/Print: take the first non-empty line of the description that looks like "Color: X" or a short name
+    let colorPrint = '';
+    if (descs[i] && descs[i] !== '--') {
+      const lines = descs[i].split(/\n| \/ /).map(s => s.trim()).filter(Boolean);
+      const colorLine = lines.find(l => /^color\s*:/i.test(l)) || lines[0] || '';
+      const printLine = lines.find(l => /^(print|style)\s*:/i.test(l));
+      const colorVal = colorLine.replace(/^color\s*:\s*/i, '');
+      const printVal = printLine ? printLine.replace(/^(print|style)\s*:\s*/i, '') : '';
+      colorPrint = printVal ? `${colorVal} / ${printVal}` : colorVal;
+    }
+    if (colorPrint) document.getElementById(`ps-colorprint-${rowId}`).value = colorPrint;
+
+    // Sizes string like "S: 2 - M: 8 - L: 10" -> fill each size input
+    if (sizes[i] && sizes[i] !== '--') {
+      const sizeMatches = sizes[i].match(/(XXS|XS|S|M|L|XL|XXL|3XL|2XL)\s*:\s*(\d+)/gi) || [];
+      sizeMatches.forEach(m => {
+        const parts = m.match(/(XXS|XS|S|M|L|XL|XXL|3XL|2XL)\s*:\s*(\d+)/i);
+        if (!parts) return;
+        let sizeKey = parts[1].toUpperCase();
+        if (sizeKey === '2XL') sizeKey = 'XXL';
+        const qty = parts[2];
+        const input = document.getElementById(`ps-size-${rowId}-${sizeKey}`);
+        if (input) input.value = qty;
+      });
+    }
+  }
+  ps_updateTotal();
+}
 
 function ps_addProduct() {
   ps_rowCounter++;
