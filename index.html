@@ -1464,24 +1464,27 @@ async function ps_generatePDF() {
       const lw = doc.getTextWidth(label);
       doc.setFont('times', 'normal');
       doc.text(': ' + value, margin + lw, ly);
-      ly += 14;
+      ly += 18;
     };
 
     fieldLine('Order Number', ordernumber);
-    if (club) fieldLine('Club', club);
+    if (club) {
+      const clubLabel = /club/i.test(club) ? 'Club' : 'Client';
+      fieldLine(clubLabel, club);
+    }
     if (box) fieldLine('Box', box);
     if (date) fieldLine('Date', date);
 
     doc.setFontSize(9.5);
     doc.setFont('times', 'bold');
     doc.text('Shipping / Billing Address:', margin, ly);
-    ly += 13;
+    ly += 16;
 
     doc.setFont('times', 'normal');
     doc.setFontSize(9);
     address.split('\n').map(s => s.trim()).filter(Boolean).forEach(line => {
       doc.text(line, margin, ly);
-      ly += 12;
+      ly += 14;
     });
 
     // ── RIGHT COLUMN — TABLE ──
