@@ -453,12 +453,18 @@ function extractHubspotData(raw) {
   return { data, get };
 }
 
-const formatAddrHS = (addr) => addr
-  .replace(/([a-z])([A-Z])/g, '$1\n$2')
-  .replace(/([a-zA-Z])(\d{3,})/g, '$1\n$2')
-  .replace(/(\d{5})\s*\(/g, '$1\n(')
-  .replace(/\s+([a-zA-Z0-9._%+\-]+@)/g, '\n$1')
-  .replace(/\n+/g, '\n').trim();
+const formatAddrHS = (addr) => {
+  // Only reformat if it looks like a single-line address (no existing newlines)
+  if (addr.includes('\n')) return addr.replace(/\n+/g, '\n').trim();
+  let result = addr
+    .replace(/([a-z])([A-Z])/g, '$1\n$2')            // camelCase split (e.g. "ClubDrive" → "Club\nDrive")
+    .replace(/([a-zA-Z])(\d{3,})/g, '$1\n$2')         // letter→long number (e.g. "Drive1100")
+    .replace(/([A-Z]{2})\s+(\d{5}[-\d]*)\s*\(/g, '$1 $2\n(') // "GA 30107 (" → "GA 30107\n("
+    .replace(/([A-Z]{2})\s+(\d{5}[-\d]*)\s+/g, '$1 $2\n')    // "GA 30107 X" → "GA 30107\nX"
+    .replace(/\s+([a-zA-Z0-9._%+\-]+@)/g, '\n$1')    // email on own line
+    .replace(/\n+/g, '\n').trim();
+  return result;
+};
 
 function parseHubspot() {
   const raw = document.getElementById('hubspot-paste').value;
@@ -545,7 +551,7 @@ function parseHubspot() {
       // Strip any embedded size-breakdown lines (e.g. "S: 2 - M: 8 - L: 10" or "XS: 2 - XXL: 4")
       cleanedDesc = cleanedDesc
         .split('\n')
-        .filter(line => !/^\s*(?:XXS|XS|S|M|L|XL|XXL|XXXL|3XL|2XL)\s*:\s*\d+(\s*-\s*(?:XXS|XS|S|M|L|XL|XXL|XXXL|3XL|2XL)\s*:\s*\d+)*\s*$/i.test(line))
+        .filter(line => !/^\s*(?:XXS|XS|S|M|L|XL|XXL|XXXL|3XL|2XL)\s*:\s*\d+(\s*[-,]\s*(?:XXS|XS|S|M|L|XL|XXL|XXXL|3XL|2XL)\s*:\s*\d+)*\s*$/i.test(line))
         .join('\n')
         .trim();
       document.getElementById('desc_' + n).value = cleanedDesc;
