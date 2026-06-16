@@ -327,6 +327,15 @@
       <button class="btn btn-primary" id="po-download-btn" onclick="po_generateAllPDFs()">⬇ Download PDF</button>
     </div>
   </div>
+  <div class="form-area" style="padding:16px 24px 0;">
+    <div class="form-section">
+      <h3>Paste from HubSpot</h3>
+      <div class="field-row">
+        <textarea id="po-hubspot-paste" rows="6" placeholder="Paste HubSpot order data here — each Description #N will become a separate colorway…" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;font-family:monospace;resize:vertical;"></textarea>
+      </div>
+      <button class="btn btn-secondary" onclick="po_parseHubspot()">Auto-fill from HubSpot data</button>
+    </div>
+  </div>
   <div class="po-tabs-row" id="po-tabs-row"></div>
   <div class="form-area" id="po-form-area"></div>
   <div id="pdf-pages-container"></div>
@@ -776,6 +785,139 @@ const po_staticDefaults = {
 const po_cwStatic = {};
 function po_getStatic(id, key) { return (po_cwStatic[id] && po_cwStatic[id][key] !== undefined) ? po_cwStatic[id][key] : po_staticDefaults[key]; }
 function po_setStatic(id, key, v) { if (!po_cwStatic[id]) po_cwStatic[id] = {}; po_cwStatic[id][key] = v; }
+
+function po_parseHubspot() {
+  const raw = document.getElementById('po-hubspot-paste').value;
+  if (!raw.trim()) return;
+
+  const { get } = extractHubspotData(raw);
+
+  // Top-level fields shared across colorways
+  const orderNum = get('a. Order');
+  const club     = get('b. Club');
+  const shipDate = get('d. Shipping');
+
+  // Each description slot is a colorway
+  const descKeys = ['h. Description #1','i. Description #2','j. Description #3'];
+  const sizeKeys = ['Sizes #1','Sizes #2','Sizes #3','Sizes #4','Sizes #5'];
+  const qtyKeys  = ['k. Qty #1','l. Qty #2','m. Qty #3','n. Qty #4','o. Qty #5'];
+
+  const descs = descKeys.map(k => get(k));
+  const sizes = sizeKeys.map(k => get(k));
+  const qtys  = qtyKeys.map(k => get(k));
+
+  const numColorways = descs.filter(d => d && d !== '--').length || 1;
+
+  // Helper: parse a multiline description block into fields
+  function parseDesc(text) {
+    const result = {};
+    if (!text || text === '--') return result;
+    text.split('\n').forEach(line => {
+      line = line.trim();
+      const m = line.match(/^([^:]+):\s*(.+)/);
+      if (m) result[m[1].trim().toLowerCase()] = m[2].trim();
+    });
+    return result;
+  }
+
+  // Helper: extract size breakdown from sizes string like "S: 2 - M: 8 - L: 10"
+  function parseSizes(sizeStr) {
+    if (!sizeStr || sizeStr === '--') return {};
+    const result = {};
+    const matches = sizeStr.match(/(XXS|XS|S|M|L|XL|XXL|3XL|2XL)\s*:\s*(\d+)/gi) || [];
+    matches.forEach(m => {
+      const p = m.match(/(XXS|XS|S|M|L|XL|XXL|3XL|2XL)\s*:\s*(\d+)/i);
+      if (p) {
+        let key = p[1].toUpperCase();
+        if (key === '2XL') key = 'XXL';
+        result[key] = p[2];
+      }
+    });
+    return result;
+  }
+
+  // Reset colorways and rebuild
+  po_colorways = [];
+  po_activeIdx = 0;
+  po_cwCounter = 0;
+
+  for (let i = 0; i < numColorways; i++) {
+    po_cwCounter++;
+    po_colorways.push({ id: po_cwCounter });
+  }
+  po_renderTabs();
+  po_renderPanels();
+
+  // Populate each colorway
+  po_colorways.forEach((cw, i) => {
+    const id = cw.id;
+    const fields = parseDesc(descs[i]);
+    const sizeData = parseSizes(sizes[i]);
+
+    const setVal = (fid, val) => {
+      const el = document.getElementById(`cw-${id}-${fid}`);
+      if (el && val) el.value = val;
+    };
+
+    // PO Header
+    if (orderNum) setVal('po', orderNum.replace(/[^0-9]/g, ''));
+    if (club) setVal('club', club);
+    if (shipDate && shipDate !== '--') setVal('datevalue', shipDate);
+
+    // Color description (subtitle) — use "color on background" format
+    const colorName = fields['color'] || '';
+    const iconName  = fields['icons'] || fields['print'] || fields['style'] || '';
+    if (colorName && iconName) setVal('colorname', `${colorName} on ${iconName}`);
+    else if (colorName) setVal('colorname', colorName);
+
+    // Print name: "icons" or "style" value
+    if (iconName) setVal('printname', iconName);
+
+    // Print + background colors
+    // Clear any default and add parsed color
+    const pcContainer = document.getElementById(`cw-${id}-printcolors`);
+    if (pcContainer && colorName) {
+      pcContainer.innerHTML = '';
+      po_addPrintColor(id);
+      const inputs = pcContainer.querySelectorAll('input');
+      if (inputs[0]) inputs[0].value = colorName;
+    }
+
+    // Background color = polo color
+    const bgColorName = fields['background'] || fields['polo color'] || fields['base color'] || '';
+    if (bgColorName) {
+      setVal('bgcolorname', bgColorName);
+      po_syncPoloThread(id);
+    }
+
+    // Repeat size
+    const repeatH = fields['repeat size h'] || fields['height'] || '';
+    const repeatW = fields['repeat size w'] || fields['width'] || '';
+    if (repeatH) setVal('repeatsizeh', parseFloat(repeatH) || '');
+    if (repeatW) setVal('repeatsizew', parseFloat(repeatW) || '');
+
+    // Stroke thickness
+    const stroke = fields['stroke'] || fields['stroke thickness'] || '';
+    if (stroke) setVal('stroke', parseFloat(stroke) || '');
+
+    // Sizes → size grid
+    Object.entries(sizeData).forEach(([size, qty]) => {
+      const el = document.getElementById(`cw-${id}-size-${size}`);
+      if (el) el.value = qty;
+    });
+    po_updateQty(id);
+
+    // Embroidery description (first line of anything that mentions embroidery)
+    const embDesc = fields['embroidery'] || fields['embroidery file'] || '';
+    if (embDesc) setVal('embdesc', embDesc);
+
+    // Embroidery size
+    const embH = fields['embroidery size h'] || fields['embroidery height'] || '';
+    const embW = fields['embroidery size w'] || fields['embroidery width'] || '';
+    if (embH) setVal('embsizeh', parseFloat(embH) || '');
+    if (embW) setVal('embsizew', parseFloat(embW) || '');
+  });
+}
 
 function po_addColorway() {
   po_cwCounter++;
