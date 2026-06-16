@@ -333,7 +333,7 @@
       <div class="field-row">
         <textarea id="po-hubspot-paste" rows="6" placeholder="Paste HubSpot order data here — each Description #N will become a separate colorway…" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;font-family:monospace;resize:vertical;"></textarea>
       </div>
-      <button class="btn btn-secondary" onclick="po_parseHubspot()">Auto-fill from HubSpot data</button>
+      <button onclick="po_parseHubspot()" style="margin-top:6px;padding:8px 18px;background:#1a1a18;color:white;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;">Auto-fill from HubSpot data</button>
     </div>
   </div>
   <div class="po-tabs-row" id="po-tabs-row"></div>
@@ -801,10 +801,12 @@ function po_parseHubspot() {
   const descKeys = ['h. Description #1','i. Description #2','j. Description #3'];
   const sizeKeys = ['Sizes #1','Sizes #2','Sizes #3','Sizes #4','Sizes #5'];
   const qtyKeys  = ['k. Qty #1','l. Qty #2','m. Qty #3','n. Qty #4','o. Qty #5'];
+  const urlKeys  = ['e. Product #1','f. Product #2','g. Product #3'];
 
   const descs = descKeys.map(k => get(k));
   const sizes = sizeKeys.map(k => get(k));
   const qtys  = qtyKeys.map(k => get(k));
+  const urls  = urlKeys.map(k => get(k));
 
   const numColorways = descs.filter(d => d && d !== '--').length || 1;
 
@@ -858,6 +860,13 @@ function po_parseHubspot() {
       const el = document.getElementById(`cw-${id}-${fid}`);
       if (el && val) el.value = val;
     };
+
+    // Mockup image = product URL
+    const productUrl = urls[i];
+    if (productUrl && productUrl !== '--') {
+      setVal('mockupurl', productUrl);
+      po_previewMockup(id);
+    }
 
     // PO Header
     if (orderNum) setVal('po', orderNum.replace(/[^0-9]/g, ''));
