@@ -281,11 +281,12 @@
   <!-- FEES -->
   <div class="card">
     <p class="section-title">Fees</p>
-    <div class="row2">
+    <div class="row3">
       <div class="field"><label>Embroidery Fee</label><input id="embroidery" type="number" step="0.01" placeholder="0.00" oninput="calcTotals()" /></div>
-      <div class="field"><label>Art Fee</label><input id="art_setup" type="number" step="0.01" placeholder="0.00" oninput="calcTotals()" /></div>
+      <div class="field"><label>Art Fee <span style="color:#aaa;font-weight:400;">(negative = credit, shown as ($x))</span></label><input id="art_setup" type="number" step="0.01" placeholder="0.00" oninput="calcTotals()" /></div>
+      <div class="field"><label>Custom Main Label</label><input id="custom_label" type="number" step="0.01" placeholder="0.00" oninput="calcTotals()" /></div>
     </div>
-    <div class="row2" style="margin-top:4px;">
+    <div class="row3" style="margin-top:4px;">
       <div class="checkbox-row">
         <input type="checkbox" id="strike_embroidery" checked />
         <label for="strike_embroidery">Cross out embroidery</label>
@@ -301,12 +302,39 @@
   <div class="card">
     <p class="section-title">Totals</p>
     <div class="row3">
-      <div class="field"><label>Shipping</label><input id="shipping" type="number" step="0.01" placeholder="0.00" oninput="calcTotals()" /></div>
+      <div class="field">
+        <label style="display:flex;align-items:center;justify-content:space-between;">
+          <span>Shipping</span>
+          <span style="display:flex;align-items:center;gap:4px;font-weight:400;">
+            <button type="button" id="btn-shipping-normal" onclick="setShippingStrike(false)" style="font-size:10px;padding:2px 8px;border-radius:6px;border:1px solid #1a1a18;background:#1a1a18;color:white;cursor:pointer;font-family:inherit;">Normal</button>
+            <button type="button" id="btn-shipping-strike" onclick="setShippingStrike(true)" style="font-size:10px;padding:2px 8px;border-radius:6px;border:1px solid #ccc;background:white;color:#1a1a18;cursor:pointer;font-family:inherit;">Cross out</button>
+          </span>
+        </label>
+        <input id="shipping" type="number" step="0.01" placeholder="0.00" oninput="calcTotals()" />
+      </div>
       <div class="field"><label>Sample Reimbursement (credit)</label><input id="sample_reimbursement" type="number" step="0.01" placeholder="0.00" oninput="calcTotals()" /></div>
       <div class="field"><label>Subtotal (auto)</label><input id="subtotal" type="number" step="0.01" readonly /></div>
     </div>
     <div class="row3">
       <div class="field"><label>Total (auto)</label><input id="total" type="number" step="0.01" readonly /></div>
+    </div>
+  </div>
+
+  <!-- PAYMENT TERMS -->
+  <div class="card">
+    <p class="section-title">Payment Terms</p>
+    <div class="field">
+      <label>Preset <span style="color:#aaa;font-weight:400;">(selecting a preset fills the field below — you can edit it freely)</span></label>
+      <select id="payment_terms_preset" onchange="applyTermsPreset()" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;background:#fff;">
+        <option value="">— Select a preset —</option>
+        <option value="Due on receipt.">Due on receipt.</option>
+        <option value="Net 30.">Net 30.</option>
+        <option value="Due when customer approves this order confirmation.">Due when customer approves this order confirmation.</option>
+      </select>
+    </div>
+    <div class="field" style="margin-top:8px;">
+      <label>Payment Terms (editable)</label>
+      <textarea id="payment_terms" rows="2" placeholder="Leave blank to use the default terms on the PDF…" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
     </div>
   </div>
 
@@ -641,10 +669,33 @@ function calcTotals() {
   document.getElementById('total-qty-display').textContent = totalQty;
   document.getElementById('total-price-display').textContent = '$' + totalAmt.toFixed(2);
   document.getElementById('subtotal').value = totalAmt > 0 ? totalAmt.toFixed(2) : '';
-  const shipping = parseFloat(document.getElementById('shipping').value) || 0;
+  const shippingStruck = shippingIsStruck;
+  const shipping = shippingStruck ? 0 : (parseFloat(document.getElementById('shipping').value) || 0);
   const reimbursement = parseFloat(document.getElementById('sample_reimbursement').value) || 0;
-  const grandTotal = totalAmt + shipping - reimbursement;
+  const art = parseFloat(document.getElementById('art_setup').value) || 0;
+  const customLabel = parseFloat(document.getElementById('custom_label').value) || 0;
+  // Art can be negative (credit) — always adds directly (negative subtracts)
+  const grandTotal = totalAmt + shipping - reimbursement + art + customLabel;
   document.getElementById('total').value = grandTotal !== 0 ? grandTotal.toFixed(2) : '';
+}
+
+let shippingIsStruck = false;
+function setShippingStrike(strike) {
+  shippingIsStruck = strike;
+  const normalBtn = document.getElementById('btn-shipping-normal');
+  const strikeBtn = document.getElementById('btn-shipping-strike');
+  normalBtn.style.background = !strike ? '#1a1a18' : 'white';
+  normalBtn.style.color = !strike ? 'white' : '#1a1a18';
+  normalBtn.style.borderColor = !strike ? '#1a1a18' : '#ccc';
+  strikeBtn.style.background = strike ? '#1a1a18' : 'white';
+  strikeBtn.style.color = strike ? 'white' : '#1a1a18';
+  strikeBtn.style.borderColor = strike ? '#1a1a18' : '#ccc';
+  calcTotals();
+}
+
+function applyTermsPreset() {
+  const preset = document.getElementById('payment_terms_preset').value;
+  if (preset) document.getElementById('payment_terms').value = preset;
 }
 
 function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
@@ -706,6 +757,9 @@ async function generate() {
   }
 
   const reimbursement = num('sample_reimbursement');
+  const artRaw = num('art_setup');
+  const artDisplay = artRaw < 0 ? `($${Math.abs(artRaw).toFixed(2)})` : (artRaw !== 0 ? null : null);
+  const customLabelRaw = num('custom_label');
 
   const payload = {
     type:           docType,
@@ -720,13 +774,16 @@ async function generate() {
     product_page:   val('product_page'),
     payment_link:   val('payment_link'),
     payment_link_2: val('payment_link_2'),
+    payment_terms:  val('payment_terms'),
     line_items:     lineItems,
     subtotal:       num('subtotal'),
     embroidery:     num('embroidery') || null,
     strike_embroidery: checked('strike_embroidery'),
-    art_setup:      num('art_setup') || null,
+    art_setup:      artRaw !== 0 ? artRaw : null,
     strike_art:     checked('strike_art'),
+    custom_label:   customLabelRaw > 0 ? customLabelRaw : null,
     shipping:       num('shipping'),
+    strike_shipping: shippingIsStruck,
     sample_reimbursement: reimbursement > 0 ? `(${reimbursement.toFixed(2)})` : null,
     total:          num('total')
   };
