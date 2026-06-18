@@ -679,7 +679,7 @@ function calcTotals() {
   const art = parseFloat(document.getElementById('art_setup').value) || 0;
   const customLabel = parseFloat(document.getElementById('custom_label').value) || 0;
   // Art can be negative (credit) — always adds directly (negative subtracts)
-  const grandTotal = totalAmt + shipping - reimbursement + art + customLabel;
+  const grandTotal = totalAmt + shipping - reimbursement;
   document.getElementById('total').value = grandTotal !== 0 ? grandTotal.toFixed(2) : '';
 }
 
