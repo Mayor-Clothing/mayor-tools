@@ -799,13 +799,12 @@ async function generate() {
       quantity: qty,
       orig_price: num('orig_price_' + i) || null,
       price: num('price_' + i),
-      amount: num('amount_' + i)
+      amount: num('amount_' + i) || (qty * num('price_' + i)) // fallback: recalculate if amount field is 0
     });
   }
 
   const reimbursement = num('sample_reimbursement');
   const artRaw = num('art_setup');
-  const artDisplay = artRaw < 0 ? `($${Math.abs(artRaw).toFixed(2)})` : (artRaw !== 0 ? null : null);
   const customLabelRaw = num('custom_label');
 
   const payload = {
