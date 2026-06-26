@@ -1624,6 +1624,24 @@ function po_buildPDFPage(d) {
   </div>`;
 }
 
+// Wait until every <img> inside `root` has loaded or errored. Resolves early once
+// all are settled, or after `timeoutMs` regardless, so the PDF export never hangs
+// on a slow CDN or a broken image URL.
+function po_waitForImages(root, timeoutMs = 8000) {
+  const imgs = Array.from(root.querySelectorAll('img'));
+  if (!imgs.length) return Promise.resolve();
+  const settled = imgs.map(img => {
+    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+    return new Promise(res => {
+      img.addEventListener('load', res, { once: true });
+      img.addEventListener('error', res, { once: true });
+    });
+  });
+  const allLoaded = Promise.all(settled);
+  const cap = new Promise(res => setTimeout(res, timeoutMs));
+  return Promise.race([allLoaded, cap]);
+}
+
 async function po_generateAllPDFs() {
   const btn = document.getElementById('po-download-btn');
   btn.textContent = 'Generating...';
@@ -1644,8 +1662,9 @@ async function po_generateAllPDFs() {
       wrapper.innerHTML = po_buildPDFPage(data);
       container.appendChild(wrapper);
 
-      // Wait for images
-      await new Promise(r => setTimeout(r, 500));
+      // Wait for all images in this page to actually finish loading (or error),
+      // with a safety cap so a slow or broken image URL can't hang the export.
+      await po_waitForImages(wrapper, 8000);
 
       const pageEl = wrapper.querySelector('div');
       const canvas = await html2canvas(pageEl, {
