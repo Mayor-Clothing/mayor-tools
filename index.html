@@ -288,11 +288,11 @@
     </div>
     <div class="row3" style="margin-top:4px;">
       <div class="checkbox-row">
-        <input type="checkbox" id="strike_embroidery" checked />
+        <input type="checkbox" id="strike_embroidery" checked onchange="calcTotals()" />
         <label for="strike_embroidery">Cross out embroidery</label>
       </div>
       <div class="checkbox-row">
-        <input type="checkbox" id="strike_art" checked />
+        <input type="checkbox" id="strike_art" checked onchange="calcTotals()" />
         <label for="strike_art">Cross out art fee</label>
       </div>
     </div>
@@ -720,9 +720,14 @@ function calcTotals() {
   const shipping = shippingStruck ? 0 : (parseFloat(document.getElementById('shipping').value) || 0);
   const reimbursement = parseFloat(document.getElementById('sample_reimbursement').value) || 0;
   const art = parseFloat(document.getElementById('art_setup').value) || 0;
+  const embroidery = parseFloat(document.getElementById('embroidery').value) || 0;
   const customLabel = parseFloat(document.getElementById('custom_label').value) || 0;
-  // Art can be negative (credit) — always adds directly (negative subtracts)
-  const grandTotal = totalAmt + shipping - reimbursement + customLabel;
+  // A fee is only included in the total when it is NOT crossed out.
+  // Embroidery is always >= 0. Art can be a credit (negative), so it's added with its
+  // own sign — a positive art fee increases the total, a negative one reduces it.
+  const embInTotal = checked('strike_embroidery') ? 0 : embroidery;
+  const artInTotal = checked('strike_art') ? 0 : art;
+  const grandTotal = totalAmt + shipping - reimbursement + customLabel + embInTotal + artInTotal;
   document.getElementById('total').value = grandTotal !== 0 ? grandTotal.toFixed(2) : '';
 }
 
