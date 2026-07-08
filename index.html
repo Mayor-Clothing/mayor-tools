@@ -572,7 +572,7 @@ function parseHubspot() {
   const club     = get('b. Club');
   const address  = get('c. Shipping');
   const billingAddress = get('c_billing_address') || get('c. Billing');
-  const shipDate = parseShipDate(get('d. Ship') || get('d. Shipping'));
+  const shipDate = parseShipDate(get('Ship Date') || get('d. Ship') || get('d. Shipping'));
   const payLink  = get('y. Payment');
 
   if (orderNum) document.getElementById('order_number').value = orderNum;
@@ -931,7 +931,7 @@ function po_parseHubspot() {
   // Top-level fields shared across colorways
   const orderNum = get('a. Order');
   const club     = get('b. Club');
-  const shipDate = parseShipDate(get('d. Ship') || get('d. Shipping'));
+  const shipDate = parseShipDate(get('Ship Date') || get('d. Ship') || get('d. Shipping'));
 
   // Each description slot is a colorway
   const descKeys = ['h. Description #1','i. Description #2','j. Description #3'];
@@ -1744,7 +1744,7 @@ function ps_parseHubspot() {
   const club     = get('b. Club');
   const address  = get('c. Shipping');
   const billingAddress = get('c_billing_address') || get('c. Billing');
-  const shipDate = parseShipDate(get('d. Ship') || get('d. Shipping'));
+  const shipDate = parseShipDate(get('Ship Date') || get('d. Ship') || get('d. Shipping'));
 
   if (orderNum) document.getElementById('ps-ordernumber').value = orderNum;
   if (club)     document.getElementById('ps-club').value = club;
