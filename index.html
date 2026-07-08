@@ -288,11 +288,11 @@
     </div>
     <div class="row3" style="margin-top:4px;">
       <div class="checkbox-row">
-        <input type="checkbox" id="strike_embroidery" checked onchange="calcTotals()" />
+        <input type="checkbox" id="strike_embroidery" checked />
         <label for="strike_embroidery">Cross out embroidery</label>
       </div>
       <div class="checkbox-row">
-        <input type="checkbox" id="strike_art" checked onchange="calcTotals()" />
+        <input type="checkbox" id="strike_art" checked />
         <label for="strike_art">Cross out art fee</label>
       </div>
     </div>
@@ -535,6 +535,33 @@ const formatAddrHS = (addr) => {
   return result;
 };
 
+// Parse HubSpot ship date — handles ISO "2026-05-29", "05/29/2026", or existing "Friday, May 29, 2026"
+function parseShipDate(raw) {
+  if (!raw || raw === '--') return '';
+  // Strip HubSpot's "(X days from now)" or "(X days ago)" suffix
+  raw = raw.replace(/\s*\(.*?\)\s*$/, '').trim();
+  // Already a nice string like "Friday, May 29, 2026"
+  if (/[A-Za-z]/.test(raw) && raw.length > 6) return raw.trim();
+  // ISO format: "2026-05-29"
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) {
+    const d = new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+    return d.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  }
+  // MM/DD/YYYY
+  const mdy = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mdy) {
+    const d = new Date(Number(mdy[3]), Number(mdy[1]) - 1, Number(mdy[2]));
+    return d.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  }
+  // Timestamp (ms)
+  if (/^\d{10,13}$/.test(raw.trim())) {
+    const d = new Date(Number(raw.trim()) * (raw.trim().length === 10 ? 1000 : 1));
+    return d.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  }
+  return raw.trim();
+}
+
 function parseHubspot() {
   const raw = document.getElementById('hubspot-paste').value;
   if (!raw.trim()) return;
@@ -545,7 +572,7 @@ function parseHubspot() {
   const club     = get('b. Club');
   const address  = get('c. Shipping');
   const billingAddress = get('c_billing_address') || get('c. Billing');
-  const shipDate = get('d. Shipping');
+  const shipDate = parseShipDate(get('d. Ship') || get('d. Shipping'));
   const payLink  = get('y. Payment');
 
   if (orderNum) document.getElementById('order_number').value = orderNum;
@@ -720,14 +747,9 @@ function calcTotals() {
   const shipping = shippingStruck ? 0 : (parseFloat(document.getElementById('shipping').value) || 0);
   const reimbursement = parseFloat(document.getElementById('sample_reimbursement').value) || 0;
   const art = parseFloat(document.getElementById('art_setup').value) || 0;
-  const embroidery = parseFloat(document.getElementById('embroidery').value) || 0;
   const customLabel = parseFloat(document.getElementById('custom_label').value) || 0;
-  // A fee is only included in the total when it is NOT crossed out.
-  // Embroidery is always >= 0. Art can be a credit (negative), so it's added with its
-  // own sign — a positive art fee increases the total, a negative one reduces it.
-  const embInTotal = checked('strike_embroidery') ? 0 : embroidery;
-  const artInTotal = checked('strike_art') ? 0 : art;
-  const grandTotal = totalAmt + shipping - reimbursement + customLabel + embInTotal + artInTotal;
+  // Art can be negative (credit) — always adds directly (negative subtracts)
+  const grandTotal = totalAmt + shipping - reimbursement + customLabel;
   document.getElementById('total').value = grandTotal !== 0 ? grandTotal.toFixed(2) : '';
 }
 
@@ -909,7 +931,7 @@ function po_parseHubspot() {
   // Top-level fields shared across colorways
   const orderNum = get('a. Order');
   const club     = get('b. Club');
-  const shipDate = get('d. Shipping');
+  const shipDate = parseShipDate(get('d. Ship') || get('d. Shipping'));
 
   // Each description slot is a colorway
   const descKeys = ['h. Description #1','i. Description #2','j. Description #3'];
@@ -1629,24 +1651,6 @@ function po_buildPDFPage(d) {
   </div>`;
 }
 
-// Wait until every <img> inside `root` has loaded or errored. Resolves early once
-// all are settled, or after `timeoutMs` regardless, so the PDF export never hangs
-// on a slow CDN or a broken image URL.
-function po_waitForImages(root, timeoutMs = 8000) {
-  const imgs = Array.from(root.querySelectorAll('img'));
-  if (!imgs.length) return Promise.resolve();
-  const settled = imgs.map(img => {
-    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
-    return new Promise(res => {
-      img.addEventListener('load', res, { once: true });
-      img.addEventListener('error', res, { once: true });
-    });
-  });
-  const allLoaded = Promise.all(settled);
-  const cap = new Promise(res => setTimeout(res, timeoutMs));
-  return Promise.race([allLoaded, cap]);
-}
-
 async function po_generateAllPDFs() {
   const btn = document.getElementById('po-download-btn');
   btn.textContent = 'Generating...';
@@ -1667,9 +1671,8 @@ async function po_generateAllPDFs() {
       wrapper.innerHTML = po_buildPDFPage(data);
       container.appendChild(wrapper);
 
-      // Wait for all images in this page to actually finish loading (or error),
-      // with a safety cap so a slow or broken image URL can't hang the export.
-      await po_waitForImages(wrapper, 8000);
+      // Wait for images
+      await new Promise(r => setTimeout(r, 500));
 
       const pageEl = wrapper.querySelector('div');
       const canvas = await html2canvas(pageEl, {
@@ -1741,7 +1744,7 @@ function ps_parseHubspot() {
   const club     = get('b. Club');
   const address  = get('c. Shipping');
   const billingAddress = get('c_billing_address') || get('c. Billing');
-  const shipDate = get('d. Shipping');
+  const shipDate = parseShipDate(get('d. Ship') || get('d. Shipping'));
 
   if (orderNum) document.getElementById('ps-ordernumber').value = orderNum;
   if (club)     document.getElementById('ps-club').value = club;
