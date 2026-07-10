@@ -472,10 +472,12 @@ function extractHubspotData(raw) {
   }
 
   function get(prefix) {
-    for (const key of Object.keys(data)) {
-      if (key.toLowerCase().startsWith(prefix.toLowerCase())) return data[key] || '';
-    }
-    return '';
+    const keys = Object.keys(data);
+    const pl = prefix.toLowerCase();
+    const exact = keys.find((k) => k.toLowerCase() === pl);
+    if (exact) return data[exact] || '';
+    const pre = keys.find((k) => k.toLowerCase().startsWith(pl));
+    return pre ? (data[pre] || '') : '';
   }
 
   return { data, get };
@@ -568,12 +570,12 @@ function parseHubspot() {
 
   const { get } = extractHubspotData(raw);
 
-  const orderNum = get('a. Order');
-  const club     = get('b. Club');
-  const address  = get('c. Shipping');
-  const billingAddress = get('c_billing_address') || get('c. Billing');
-  const shipDate = parseShipDate(get('Ship Date') || get('d. Ship') || get('d. Shipping'));
-  const payLink  = get('y. Payment');
+  const orderNum = get('Order Number');
+  const club     = get('Customer');
+  const address  = get('Shipping Address');
+  const billingAddress = get('Billing Address');
+  const shipDate = parseShipDate(get('Ship Date'));
+  const payLink  = get('Payment Link');
 
   if (orderNum) document.getElementById('order_number').value = orderNum;
   if (club)     document.getElementById('club').value = club;
@@ -594,37 +596,37 @@ function parseHubspot() {
   const productPage = get('Product Page');
   if (productPage && productPage !== '--') document.getElementById('product_page').value = productPage;
 
-  const urls   = ['e. Product #1','f. Product #2','g. Product #3'].map(k => get(k));
-  const descs  = ['h. Description #1','i. Description #2','j. Description #3'].map(k => get(k));
+  const urls   = ['Product #1','Product #2','Product #3','Product #4','Product #5'].map(k => get(k));
+  const descs  = ['Description #1','Description #2','Description #3','Description #4','Description #5'].map(k => get(k));
   const sizes  = ['Sizes #1','Sizes #2','Sizes #3','Sizes #4','Sizes #5'].map(k => get(k));
-  const qtys   = ['k. Quantity #1','l. Quantity #2','m. Quantity #3','n. Quantity #4','o. Quantity #5'].map(k => parseFloat((get(k)||'').replace(/[^0-9.]/g,'')) || 0);
-  const prices = ['p. Price #1','q. Price #2','r. Price #3','s. Price #4','t. Price #5'].map(k => parseFloat((get(k)||'').replace(/[^0-9.]/g,'')) || 0);
+  const qtys   = ['Quantity #1','Quantity #2','Quantity #3','Quantity #4','Quantity #5'].map(k => parseFloat((get(k)||'').replace(/[^0-9.]/g,'')) || 0);
+  const prices = ['Price #1','Price #2','Price #3','Price #4','Price #5'].map(k => parseFloat((get(k)||'').replace(/[^0-9.]/g,'')) || 0);
 
-  const shippingVal = get('w. Shipping');
+  const shippingVal = get('Shipping Cost');
   if (shippingVal && shippingVal !== '--') {
     const sv = parseFloat(shippingVal.replace(/[^0-9.]/g,'')) || 0;
     if (sv > 0) document.getElementById('shipping').value = sv;
   }
 
-  const customerEmail = get('customer_email') || get('customer email');
+  const customerEmail = get('Customer Email');
   if (customerEmail && customerEmail !== '--') {
     const emails = customerEmail.split(/[\n;,]+/).map(e => e.trim()).filter(Boolean);
     document.getElementById('customer_email').value = emails.join(', ');
   }
 
-  const embroideryVal = get('za. Embroidery');
+  const embroideryVal = get('Embroidery');
   if (embroideryVal && embroideryVal !== '--') {
     const ev = parseFloat(embroideryVal.replace(/[^0-9.]/g,'')) || 0;
     if (ev > 0) document.getElementById('embroidery').value = ev;
   }
 
-  const artVal = get('zb. Art');
+  const artVal = get('Art Setup');
   if (artVal && artVal !== '--') {
     const av = parseFloat(artVal.replace(/[^0-9.]/g,'')) || 0;
     if (av > 0) document.getElementById('art_setup').value = av;
   }
 
-  const reimbursementVal = get('z_sample_reimbursement') || get('Sample Reimbursement');
+  const reimbursementVal = get('Sample Reimbursement');
   if (reimbursementVal && reimbursementVal !== '--') {
     const rv = parseFloat(reimbursementVal.replace(/[^0-9.]/g,'')) || 0;
     if (rv > 0) document.getElementById('sample_reimbursement').value = rv;
@@ -929,15 +931,15 @@ function po_parseHubspot() {
   const { get } = extractHubspotData(raw);
 
   // Top-level fields shared across colorways
-  const orderNum = get('a. Order');
-  const club     = get('b. Club');
-  const shipDate = parseShipDate(get('Ship Date') || get('d. Ship') || get('d. Shipping'));
+  const orderNum = get('Order Number');
+  const club     = get('Customer');
+  const shipDate = parseShipDate(get('Ship Date'));
 
   // Each description slot is a colorway
-  const descKeys = ['h. Description #1','i. Description #2','j. Description #3'];
+  const descKeys = ['Description #1','Description #2','Description #3','Description #4','Description #5'];
   const sizeKeys = ['Sizes #1','Sizes #2','Sizes #3','Sizes #4','Sizes #5'];
-  const qtyKeys  = ['k. Qty #1','l. Qty #2','m. Qty #3','n. Qty #4','o. Qty #5'];
-  const urlKeys  = ['e. Product #1','f. Product #2','g. Product #3'];
+  const qtyKeys  = ['Quantity #1','Quantity #2','Quantity #3','Quantity #4','Quantity #5'];
+  const urlKeys  = ['Product #1','Product #2','Product #3','Product #4','Product #5'];
 
   const descs = descKeys.map(k => get(k));
   const sizes = sizeKeys.map(k => get(k));
@@ -1740,11 +1742,11 @@ function ps_parseHubspot() {
 
   const { get } = extractHubspotData(raw);
 
-  const orderNum = get('a. Order');
-  const club     = get('b. Club');
-  const address  = get('c. Shipping');
-  const billingAddress = get('c_billing_address') || get('c. Billing');
-  const shipDate = parseShipDate(get('Ship Date') || get('d. Ship') || get('d. Shipping'));
+  const orderNum = get('Order Number');
+  const club     = get('Customer');
+  const address  = get('Shipping Address');
+  const billingAddress = get('Billing Address');
+  const shipDate = parseShipDate(get('Ship Date'));
 
   if (orderNum) document.getElementById('ps-ordernumber').value = orderNum;
   if (club)     document.getElementById('ps-club').value = club;
@@ -1761,7 +1763,7 @@ function ps_parseHubspot() {
   }
 
   // Pull product/description/sizes the same way the invoice generator does
-  const descs = ['h. Description #1','i. Description #2','j. Description #3'].map(k => get(k));
+  const descs = ['Description #1','Description #2','Description #3','Description #4','Description #5'].map(k => get(k));
   const sizes = ['Sizes #1','Sizes #2','Sizes #3','Sizes #4','Sizes #5'].map(k => get(k));
 
   let numItems = 0;
