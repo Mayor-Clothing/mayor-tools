@@ -818,13 +818,13 @@ async function generate() {
     const desc = val('desc_' + i);
     const sizesVal = val('sizes_' + i);
     if (!qty && !desc) continue;
-    const fullDesc = sizesVal ? desc + (desc ? '\n' : '') + sizesVal : desc;
     const urlVal = val('url_' + i);
     const isUrl = /^https?:\/\//i.test(urlVal);
     lineItems.push({
       product: isUrl ? 'Custom Print Polo' : (urlVal || 'Custom Print Polo'),
       url: isUrl ? urlVal : '',
-      description: fullDesc,
+      description: desc,
+      sizes: sizesVal,
       quantity: qty,
       orig_price: num('orig_price_' + i) || null,
       price: num('price_' + i),
