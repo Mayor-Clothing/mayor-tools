@@ -186,15 +186,28 @@
   <div class="logo-area">
     <img src="Mayor_Logo_transparent.png" alt="Mayor">
   </div>
-  <button class="nav-tab active" id="nav-invoice" onclick="switchPage('invoice')">Invoice Generator</button>
+  <button class="nav-tab active" id="nav-refresh" onclick="switchPage('refresh')">Refresh</button>
+  <button class="nav-tab" id="nav-invoice" onclick="switchPage('invoice')">Invoice Generator</button>
   <button class="nav-tab" id="nav-po" onclick="switchPage('po')">PO Generator</button>
   <button class="nav-tab" id="nav-ps" onclick="switchPage('ps')">Packing Slip</button>
 </nav>
 
 <!-- ══════════════════════════════════════════════
+     PAGE 0 — REFRESH (default landing; the deal "Refresh button" link opens here)
+═══════════════════════════════════════════════ -->
+<div class="page active" id="page-refresh">
+  <div style="max-width:560px; margin:72px auto; text-align:center; padding:0 24px;">
+    <h1 style="font-size:22px; font-weight:600; color:#1a1a18; margin-bottom:10px;">Refresh Orders</h1>
+    <p style="font-size:14px; color:#666; line-height:1.6; margin-bottom:32px;">Edited a deal in HubSpot? Click below and Hermes will pick up the change and update the order sheet. You can close this tab right after.</p>
+    <button id="refresh-btn" onclick="triggerRefresh()" style="width:100%; max-width:340px; padding:26px 32px; font-size:20px; font-weight:600; color:#fff; background:#1a1a18; border:none; border-radius:14px; cursor:pointer;">Refresh</button>
+    <p id="refresh-status" style="margin-top:20px; font-size:13px; color:#666; min-height:20px;"></p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
      PAGE 1 — INVOICE GENERATOR (untouched)
 ═══════════════════════════════════════════════ -->
-<div class="page active" id="page-invoice">
+<div class="page" id="page-invoice">
 <div class="po-topbar">
   <span style="font-size:14px;font-weight:600;">Order Confirmation &amp; Invoice Generator</span>
 </div>
@@ -439,12 +452,33 @@
 // PAGE SWITCHING
 // ══════════════════════════════════════════════
 function switchPage(page) {
+  document.getElementById('page-refresh').classList.toggle('active', page === 'refresh');
   document.getElementById('page-invoice').classList.toggle('active', page === 'invoice');
   document.getElementById('page-po').classList.toggle('active', page === 'po');
   document.getElementById('page-ps').classList.toggle('active', page === 'ps');
+  document.getElementById('nav-refresh').classList.toggle('active', page === 'refresh');
   document.getElementById('nav-invoice').classList.toggle('active', page === 'invoice');
   document.getElementById('nav-po').classList.toggle('active', page === 'po');
   document.getElementById('nav-ps').classList.toggle('active', page === 'ps');
+}
+
+// The Refresh button: tell Hermes to check HubSpot for edits and re-sync the
+// sheet. Fire-and-forget (no-cors) so it works from this public page with no key
+// and Matt can close the tab immediately after clicking.
+async function triggerRefresh() {
+  const btn = document.getElementById('refresh-btn');
+  const status = document.getElementById('refresh-status');
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+  status.textContent = 'Sending…';
+  try {
+    await fetch('https://mayor-email-backend.onrender.com/hermes/refresh', { method: 'POST', mode: 'no-cors' });
+    status.textContent = '✓ Sent. Hermes is checking HubSpot for edits and updating the sheet — you can close this tab.';
+  } catch (e) {
+    status.textContent = 'Couldn’t reach the server. Wait a moment and try again.';
+  } finally {
+    setTimeout(() => { btn.disabled = false; btn.style.opacity = '1'; }, 3000);
+  }
 }
 
 
