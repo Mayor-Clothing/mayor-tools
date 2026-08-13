@@ -472,8 +472,30 @@ async function triggerRefresh() {
   btn.style.opacity = '0.6';
   status.textContent = 'Sending…';
   try {
-    await fetch('https://mayor-email-backend.onrender.com/hermes/refresh', { method: 'POST', mode: 'no-cors' });
-    status.textContent = '✓ Sent. Hermes is checking HubSpot for edits and updating the sheet — you can close this tab.';
+    // Not no-cors: the response has to be readable, or a rate-limited or failed
+    // refresh looks exactly like a successful one ("Sent" either way).
+    const res = await fetch('https://mayor-email-backend.onrender.com/hermes/refresh', { method: 'POST' });
+    if (res.status === 429) {
+      status.textContent = 'Too many refreshes in a row — wait a minute, then try again.';
+      return;
+    }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const { runId } = await res.json();
+    status.textContent = 'Checking HubSpot for edits…';
+
+    // Poll for the outcome. Closing the tab is still fine — the work runs
+    // server-side regardless; this only decides what the page can tell you.
+    const deadline = Date.now() + 3 * 60 * 1000;
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 3000));
+      const s = await fetch('https://mayor-email-backend.onrender.com/hermes/refresh/status/' + runId).then((r) => r.json()).catch(() => null);
+      if (!s || s.state !== 'done') continue;
+      if (s.failed) status.textContent = '✗ Refresh failed — check the Render logs.';
+      else if (!s.updated) status.textContent = '✓ Nothing had changed in HubSpot since the last refresh.';
+      else status.textContent = `✓ Updated ${s.updated} document${s.updated === 1 ? '' : 's'} (checked ${s.checked} deal${s.checked === 1 ? '' : 's'})${s.errors ? `, ${s.errors} error${s.errors === 1 ? '' : 's'}` : ''}.`;
+      return;
+    }
+    status.textContent = 'Still running — it is safe to close this tab; the sheet will update on its own.';
   } catch (e) {
     status.textContent = 'Couldn’t reach the server. Wait a moment and try again.';
   } finally {
